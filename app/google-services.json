@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "81909610041",
+    "project_id": "lero-e61ab",
+    "storage_bucket": "lero-e61ab.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81909610041:android:2607cc0028276afe75ffe8",
+        "android_client_info": {
+          "package_name": "com.jalloft.lero"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "81909610041-3ib7mmotbacn81v8i36vrl8mmp3sr4u1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jalloft.lero",
+            "certificate_hash": "1893278e6d7eaf05a3c3d1797ee1987dc90f94d2"
+          }
+        },
+        {
+          "client_id": "81909610041-405vg5pbhia1eh9nogulh40hq17rndp8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAR40OzIgVdxzKA-o5dwl3jmRMboIEsyAg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "81909610041-405vg5pbhia1eh9nogulh40hq17rndp8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

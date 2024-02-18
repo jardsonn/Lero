@@ -5,5 +5,5 @@ package com.jalloft.lero.data.domain
  */
 data class Work(
     val profission: String? = null,
-    val where: String? = null,
+    val company: String? = null,
 )

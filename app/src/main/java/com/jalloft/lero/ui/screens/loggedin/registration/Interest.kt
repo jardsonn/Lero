@@ -26,30 +26,61 @@ import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InterestScreen(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
     val context = LocalContext.current
+    val user = registrationViewModel.userState
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     val interests = remember { mutableStateListOf<Interests>() }
-    var isLoading by remember { mutableStateOf(false) }
     var showInterestsOptions by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = user, block = {
+        if (interests.isEmpty() && user != null) {
+            interests.addAll(user.interests)
+        }
+    })
+
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            registrationViewModel.clear()
+            onNext()
+        }
+    })
 
     RegisterScaffold(
         title = stringResource(R.string.what_are_you_looking_for),
         subtitle = stringResource(R.string.interests_subtitle),
         onBack = onBack,
-        onSubmit = { isLoading = true },
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        onSubmit = {
+            if (interests != user?.interests) {
+                val updates = mapOf(
+                    UserFields.INTERESTS to interests,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            } else {
+                Timber.i("Dados não alterados e não atualizados")
+                registrationViewModel.clear()
+                onNext()
+            }
+        },
         onSkip = onNext,
-        isLoading = isLoading
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
 
         val text =

@@ -29,6 +29,9 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         return auth.currentUser != null
     }
 
+    override fun firebaseUser() = auth.currentUser
+
+
     override suspend fun reauthenticate(credential: AuthCredential) = flow {
         try {
             emit(ResponseState.Loading)

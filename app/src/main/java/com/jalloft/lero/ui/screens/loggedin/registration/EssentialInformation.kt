@@ -1,52 +1,29 @@
 package com.jalloft.lero.ui.screens.loggedin.registration
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import com.jalloft.lero.R
 import com.jalloft.lero.data.domain.Height
@@ -55,51 +32,88 @@ import com.jalloft.lero.ui.components.NormalTextField
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.theme.LeroTheme
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.DataValidator
 import com.jalloft.lero.util.DataValidator.INVALID_DATE_FORMT
 import com.jalloft.lero.util.DataValidator.INVALID_DATE_MINOR
 import com.jalloft.lero.util.DataValidator.VALID_DATE
 import com.jalloft.lero.util.DataValidator.isBirthDateValid
+import com.jalloft.lero.util.DataValidator.stringToTimestamp
 import com.jalloft.lero.util.TextFieldFilter.date
-import kotlinx.coroutines.delay
+import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EssentialInformationScreen(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
 
+    val context = LocalContext.current
+    val user = registrationViewModel.userState
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+
 
     var name by remember { mutableStateOf("") }
     var dateOfBirth by remember { mutableStateOf("") }
     var height by remember { mutableStateOf<Height?>(null) }
+
+    LaunchedEffect(key1 = user, block = {
+        if (user != null) {
+            if (name.trim().isEmpty()) {
+                name = user.name.orEmpty()
+            }
+            if (dateOfBirth.trim().isEmpty()) {
+                dateOfBirth = DataValidator.dateToString(user.dateOfBirth?.toDate()).orEmpty()
+            }
+            if (height == null) {
+                height = user.height
+            }
+        }
+    })
+
+
     var showHeightOptions by remember { mutableStateOf(false) }
 
     val isvalidSubmit =
         (name.isNotEmpty() && name.length > 3 && name.length < 30) && isBirthDateValid(dateOfBirth) == VALID_DATE && height != null
 
-    var isLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = isLoading, block = {
-        if (isLoading) {
-            delay(3000)
-            isLoading = false
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            registrationViewModel.clear()
             onNext()
         }
     })
+
 
     RegisterScaffold(
         title = stringResource(R.string.seu_nome_e_sua_idade),
         subtitle = stringResource(R.string.informe_seu_nome_e_sua_data_de_nascimento),
         enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
-        onSubmit = { isLoading = true },
-        isLoading = isLoading
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        onSubmit = {
+            if (name != user?.name || DataValidator.stringToDate(dateOfBirth) != user.dateOfBirth?.toDate() || height != user.height){
+                val updates = mapOf(
+                    UserFields.NAME to name,
+                    UserFields.DATE_OF_BIRTH to stringToTimestamp(dateOfBirth),
+                    UserFields.HEIGHT to height,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            }else{
+                Timber.i("Dados não alterados e não atualizados")
+                registrationViewModel.clear()
+                onNext()
+            }
+        },
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
 
         NormalTextField(
@@ -203,20 +217,20 @@ fun EssentialInformationScreen(
 }
 
 
-@Preview
-@Composable
-fun PreviewPage() {
-    LeroTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            EssentialInformationScreen(
-                onBack = {},
-                onNext = {}
-            )
-        }
-    }
-}
+//@Preview
+//@Composable
+//fun PreviewPage() {
+//    LeroTheme {
+//        Surface(
+//            modifier = Modifier.fillMaxSize(),
+//            color = MaterialTheme.colorScheme.background
+//        ) {
+//            EssentialInformationScreen(
+//                onBack = {},
+//                onNext = {}
+//            )
+//        }
+//    }
+//}
 
 

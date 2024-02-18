@@ -2,8 +2,13 @@ package com.jalloft.lero.repositories
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.core.UserData
+import com.google.firebase.firestore.toObject
 import com.jalloft.lero.data.domain.City
 import com.jalloft.lero.data.domain.Education
+import com.jalloft.lero.data.domain.Height
 import com.jalloft.lero.data.domain.enums.Interests
 import com.jalloft.lero.data.domain.enums.SexualGender
 import com.jalloft.lero.data.domain.enums.SexualOrientation
@@ -11,6 +16,8 @@ import com.jalloft.lero.data.domain.User
 import com.jalloft.lero.data.domain.Work
 import com.jalloft.lero.util.ResponseState
 import com.jalloft.lero.util.USERS
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
@@ -23,6 +30,23 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
     @Named(USERS) private val usersRef: CollectionReference,
 ) : FirebaseFirestoreRepository {
 
+    override suspend fun updateOrEdit(userId: String?, updates: Map<String, Any?>) = flow {
+        emit(ResponseState.Loading)
+        val userRef = userId?.let { usersRef.document(it) }
+        try {
+            if (userRef == null) throw FirebaseFirestoreException(
+                "",
+                FirebaseFirestoreException.Code.UNAUTHENTICATED
+            )
+            userRef.set(updates, SetOptions.merge()).await()
+            Timber.i("User data updated successfully")
+            emit(ResponseState.Success(Unit))
+        } catch (e: FirebaseFirestoreException) {
+            Timber.w("Error updating user data: ${e.message}")
+            emit(ResponseState.Failure(e, e.message))
+        }
+    }
+
     override suspend fun saveNewUser(userId: String, user: User) = flow {
         try {
             emit(ResponseState.Loading)
@@ -34,15 +58,28 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateUserDataNameAndDateOfBirth(
+    override suspend fun updateUserEssentialInformation(
         userId: String,
-        name: String,
-        dateOfBirth: Date
+        name: String?,
+        dateOfBirth: Date?,
+        height: Height?,
     ) = flow {
         try {
             emit(ResponseState.Loading)
-            usersRef.document(userId).update("name", name, "dateOfBirth", Timestamp(dateOfBirth))
-                .await()
+            val userRef = usersRef.document(userId)
+            val snapshot = userRef.get().await()
+            if (snapshot.exists()) {
+                userRef.update("name", name, "dateOfBirth", dateOfBirth?.let { Timestamp(it) })
+                    .await()
+            } else {
+                userRef.set(
+                    User(
+                        name = name,
+                        dateOfBirth = dateOfBirth?.let { Timestamp(it) },
+                        height = height
+                    )
+                ).await()
+            }
             emit(ResponseState.Success(Unit))
         } catch (e: Exception) {
             Timber.w("updateUserDataNameAndDateOfBirth::failure", e.message)
@@ -52,8 +89,8 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataGenderAndOrientation(
         userId: String,
-        gender: SexualGender,
-        orientation: SexualOrientation
+        gender: SexualGender?,
+        orientation: SexualOrientation?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -67,7 +104,7 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataCity(
         userId: String,
-        city: City
+        city: City?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -81,7 +118,7 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataInterests(
         userId: String,
-        interests: List<Interests>
+        interests: List<Interests>?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -95,8 +132,8 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataWorkAndEducation(
         userId: String,
-        work: Work,
-        education: Education
+        work: Work?,
+        education: Education?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -110,10 +147,10 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataLifeDetails(
         userId: String,
-        isDrinker: Boolean,
-        isSmoker: Boolean,
-        hasChildren: Boolean,
-        religion: String
+        isDrinker: Boolean?,
+        isSmoker: Boolean?,
+        hasChildren: Boolean?,
+        religion: String?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -138,7 +175,7 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataHobbies(
         userId: String,
-        hobbies: List<String>
+        hobbies: List<String>?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -154,7 +191,7 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserDataBio(
         userId: String,
-        bio: String
+        bio: String?
     ) = flow {
         try {
             emit(ResponseState.Loading)
@@ -167,4 +204,70 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
             emit(ResponseState.Failure(e, e.message))
         }
     }
+
+    override fun getUserData(userId: String): Flow<User?> = flow {
+        val documentSnapshot = usersRef.document(userId).get().await()
+        if (documentSnapshot.exists()) {
+            val user = documentSnapshot.toObject(User::class.java)
+            emit(user)
+        } else {
+            emit(User())
+        }
+    }.catch { e ->
+        // Handle exception appropriately, for example:
+        Timber.i("getUserData.error: ${e.message}")
+        emit(null)
+    }
+
+
+    override fun addUserSnapshotListener(
+        userId: String,
+        responseState: (ResponseState<User?>) -> Unit
+    ) {
+        responseState(ResponseState.Loading)
+        usersRef.document(userId).addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Timber.w("Listen failed.", e)
+                responseState(ResponseState.Failure(e))
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                Timber.d("Current data: ${snapshot.data}")
+                responseState(ResponseState.Success(snapshot.toObject<User?>()))
+            } else {
+                responseState(
+                    ResponseState.Failure(
+                        FirebaseFirestoreException(
+                            "",
+                            FirebaseFirestoreException.Code.NOT_FOUND
+                        )
+                    )
+                )
+                Timber.d("Current data: null")
+            }
+        }
+    }
+
+//    override suspend fun getUserData(userId: String) = flow {
+//        try {
+//            emit(ResponseState.Loading)
+//            val documentSnapshot = usersRef.document(userId).get().await()
+//            if (documentSnapshot.exists()) {
+//                val user = documentSnapshot.toObject(User::class.java)
+//                if (user != null) {
+//                    emit(ResponseState.Success(user))
+//                } else {
+//                    Timber.w("getUserData::failure user null")
+//                    emit(ResponseState.Failure(errorMessage = "usuario nulo"))
+//                }
+//            }else{
+//                Timber.w("getUserData::success usuario não existe")
+//                emit(ResponseState.Success(null))
+//            }
+//        } catch (e: Exception) {
+//            Timber.w("getUserData::failure", e.message)
+//            emit(ResponseState.Failure(e, e.message))
+//        }
+//    }
 }

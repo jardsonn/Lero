@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -31,17 +33,40 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
 import com.jalloft.lero.ui.components.RegisterScaffold
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.util.MANDATORY_DATA_SAVED
+import com.jalloft.lero.util.UserFields
+import com.orhanobut.hawk.Hawk
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @Composable
 fun BiographyScreen(
-    onBack: () -> Unit,
-    onDone: () -> Unit
+    onBack: (() -> Unit)?,
+    onDone: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
 
-    var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val user = registrationViewModel.userState
     var bio by remember { mutableStateOf("") }
+
+    LaunchedEffect(key1 = user, block = {
+        if (user != null && bio.trim().isEmpty()) {
+            bio = user.bio.orEmpty()
+        }
+    })
+
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            onDone()
+            Hawk.put(MANDATORY_DATA_SAVED, true)
+            registrationViewModel.clear()
+        }
+    })
+
 
     val maxBioLength = 500
 
@@ -50,8 +75,25 @@ fun BiographyScreen(
         subtitle = stringResource(R.string.biography_subtitle),
         onBack = onBack,
         textButton = stringResource(R.string.done),
-        onSubmit = { isLoading = true },
-        isLoading = isLoading
+        onSubmit = {
+            if (bio != user?.bio) {
+                val updates = mapOf(
+                    UserFields.BIO to bio,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            } else {
+                Timber.i("Dados não alterados e não atualizados")
+                onDone()
+                Hawk.put(MANDATORY_DATA_SAVED, true)
+            }
+        },
+        onSkip = {
+            Hawk.put(MANDATORY_DATA_SAVED, true)
+            onDone()
+        },
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
         Text(
             text = stringResource(R.string.bio),

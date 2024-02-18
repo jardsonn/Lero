@@ -5,17 +5,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
 import com.jalloft.lero.data.domain.Education
+import com.jalloft.lero.data.domain.Work
 import com.jalloft.lero.data.domain.enums.EducationLevel
 import com.jalloft.lero.ui.components.AnimatedComponent
 import com.jalloft.lero.ui.components.ItemOption
@@ -23,26 +26,56 @@ import com.jalloft.lero.ui.components.NormalTextField
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.util.UserFields
+import timber.log.Timber
 
 
 @Composable
 fun WorkEducationScreen(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
+
+    val context = LocalContext.current
+    val user = registrationViewModel.userState
+
     var profession by remember { mutableStateOf("") }
     var company by remember { mutableStateOf("") }
     var education by remember { mutableStateOf(Education()) }
 
-    val isvalidSubmit =
-        education.level != null ||
-                education.secondaryEducationInstitution != null ||
-                education.higherEducationInstitution != null ||
-                education.postGraduationInstitution != null ||
-                profession.isNotEmpty() ||
-                company.isNotEmpty()
+    val hasEducation = education.level != null ||
+            education.secondaryEducationInstitution != null ||
+            education.higherEducationInstitution != null ||
+            education.postGraduationInstitution != null
 
-    var isLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = user, block = {
+        if (user != null) {
+            if (profession.trim().isEmpty()) {
+                profession = user.work?.profission.orEmpty()
+            }
+            if (profession.trim().isEmpty()) {
+                company = user.work?.company.orEmpty()
+            }
+            if (!hasEducation && user.education != null) {
+                education = user.education
+            }
+        }
+    })
+
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            registrationViewModel.clear()
+            onNext()
+        }
+    })
+
+    val isvalidSubmit = hasEducation ||
+            profession.isNotEmpty() ||
+            company.isNotEmpty()
+
     var showEducationLevelContent by remember { mutableStateOf(false) }
 
     RegisterScaffold(
@@ -51,8 +84,22 @@ fun WorkEducationScreen(
         enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
         onSkip = onNext,
-        onSubmit = {},
-        isLoading = isLoading
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        onSubmit = {
+            if (education != user?.education || profession != user.work?.profission || company != user.work.company) {
+                val updates = mapOf(
+                    UserFields.WORK to Work(profession, company),
+                    UserFields.EDUCATION to education,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            }else{
+                Timber.i("Dados não alterados e não atualizados")
+                registrationViewModel.clear()
+                onNext()
+            }
+        },
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
         NormalTextField(
             label = stringResource(R.string.profission),

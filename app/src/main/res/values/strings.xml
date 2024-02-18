@@ -183,6 +183,28 @@
     <string name="biography_title">Biografia</string>
     <string name="biography_subtitle">Conte um pouco sobre quem você é, o que te faz sorrir e o que te inspira. Esta é a sua chance de mostrar sua personalidade única e compartilhar o que faz seu coração bater mais forte</string>
     <string name="bio">Bio</string>
-    <string name="bio_placeholder">Descreva-se em algumas palavras ou frases...</string>
+    <string name="bio_placeholder">Descreva-se em algumas palavras ou frases…</string>
     <string name="done">Pronto</string>
+
+    <string name="error_firestore_ok">Operação concluída com sucesso.</string>
+    <string name="error_firestore_cancelled">A operação foi cancelada. Por favor, tente novamente mais tarde.</string>
+    <string name="error_firestore_unknown">Ocorreu um erro desconhecido. Tente novamente mais tarde.</string>
+    <string name="error_firestore_invalid_argument">Algo deu errado devido a informações incorretas. Por favor, verifique seus dados e tente novamente.</string>
+    <string name="error_firestore_deadline_exceeded">Tempo limite excedido. Por favor, verifique sua conexão com a internet e tente novamente.</string>
+    <string name="error_firestore_not_found">O recurso solicitado não foi encontrado. Por favor, verifique novamente.</string>
+    <string name="error_firestore_already_exists">O recurso já existe. Por favor, escolha um nome diferente ou atualize o recurso existente.</string>
+    <string name="error_firestore_permission_denied">Você não tem permissão para realizar esta ação. Por favor, entre em contato com o administrador.</string>
+    <string name="error_firestore_unauthenticated">Por favor, faça login para continuar.</string>
+    <string name="error_firestore_resource_exhausted">Não foi possível concluir a operação devido a recursos insuficientes. Por favor, tente novamente mais tarde.</string>
+    <string name="error_firestore_failed_precondition">Pré-condição não atendida. Por favor, verifique os requisitos necessários e tente novamente.</string>
+    <string name="error_firestore_aborted">A operação foi interrompida. Por favor, tente novamente mais tarde.</string>
+    <string name="error_firestore_out_of_range">O valor fornecido está fora do intervalo permitido. Por favor, forneça um valor válido.</string>
+    <string name="error_firestore_unimplemented">Esta funcionalidade ainda não foi implementada. Por favor, aguarde futuras atualizações.</string>
+    <string name="error_firestore_internal">Ocorreu um erro interno. Por favor, tente novamente mais tarde ou entre em contato com o suporte técnico.</string>
+    <string name="error_firestore_unavailable">O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde.</string>
+    <string name="error_firestore_data_loss">Houve uma perda de dados. Por favor, entre em contato com o suporte técnico para obter assistência.</string>
+    <string name="error_firestore_generic">Ocorreu um erro: %1$s, %2$s. Por favor, tente novamente mais tarde.</string>
+    <string name="error_firestore_generic_execption_null">Ocorreu um erro inesperado! Por favor, tente novamente mais tarde.</string>
+
+
 </resources>

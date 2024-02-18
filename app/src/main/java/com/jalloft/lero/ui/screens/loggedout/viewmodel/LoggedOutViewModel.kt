@@ -8,13 +8,25 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.PhoneAuthProvider
 import com.jalloft.lero.R
+import com.jalloft.lero.data.domain.User
+import com.jalloft.lero.data.domain.enums.Children
+import com.jalloft.lero.data.domain.enums.Drinker
+import com.jalloft.lero.data.domain.enums.Religion
+import com.jalloft.lero.data.domain.enums.Smoker
 import com.jalloft.lero.exception.FirebaseAuthExceptionHandler
 import com.jalloft.lero.repositories.FirebaseAuthRepository
+import com.jalloft.lero.repositories.FirebaseFirestoreRepository
+import com.jalloft.lero.ui.navigation.GraphDestination
+import com.jalloft.lero.ui.navigation.RegisterDataDestination
+import com.jalloft.lero.ui.navigation.StartDestination
 import com.jalloft.lero.util.CommonUtil.findActivity
 import com.jalloft.lero.util.ResponseState
+import com.jalloft.lero.util.getRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -25,12 +37,11 @@ const val MILLIS_PER_SECOND = 1000
 
 @HiltViewModel
 class LoggedOutViewModel @Inject constructor(
-    private val repo: FirebaseAuthRepository
+    private val authRepo: FirebaseAuthRepository,
+    private val dbRepo: FirebaseFirestoreRepository
 ) : ViewModel() {
 
-
-    //    var signInWithPhoneResponse by mutableStateOf<Response<Pair<String, PhoneAuthProvider.ForceResendingToken>?>?>(null)
-    var signInWithPhoneCredentialResponse by mutableStateOf<ResponseState<Unit>?>(null)
+    var signInWithPhoneCredentialResponse by mutableStateOf<ResponseState<FirebaseUser?>?>(null)
 
     var signInWithPhoneLoading by mutableStateOf(false)
     var signInWithPhoneFailure by mutableStateOf<String?>(null)
@@ -42,15 +53,18 @@ class LoggedOutViewModel @Inject constructor(
     var secondsRemaining by mutableIntStateOf(0)
     var isTimerRunning by mutableStateOf(false)
 
-    val isAuthenticated by lazy { repo.isAuthenticated() }
+    val isAuthenticated by lazy { authRepo.isAuthenticated() }
 
     fun signInWithGoogle(token: String) {
         viewModelScope.launch {
-            repo.signInWithGoogle(token).collect {
+            authRepo.signInWithGoogle(token).collect {
 
             }
         }
     }
+
+
+    val firebaseUser by lazy { authRepo.firebaseUser() }
 
     fun signInWithPhone(context: Context, number: String) {
         val exceptionHandler = FirebaseAuthExceptionHandler(context)
@@ -60,7 +74,7 @@ class LoggedOutViewModel @Inject constructor(
         }
         val activity = context.findActivity()
         viewModelScope.launch {
-            repo.signInWithPhone(activity, number, onStartVerification = {
+            authRepo.signInWithPhone(activity, number, onStartVerification = {
                 launch {
                     if (isTimerRunning) {
                         repeat(TIMER_DURATION_SECONDS) {
@@ -105,10 +119,10 @@ class LoggedOutViewModel @Inject constructor(
         val credential = PhoneAuthProvider.getCredential(verificationId, code)
         signInWithPhoneCredentialResponse = ResponseState.Loading
         viewModelScope.launch {
-            repo.signInWithPhoneAuthCredential(credential) { response ->
+            authRepo.signInWithPhoneAuthCredential(credential) { response ->
                 signInWithPhoneCredentialResponse = when (response) {
                     is ResponseState.Success -> {
-                        ResponseState.Success(Unit)
+                        ResponseState.Success(response.data)
                     }
 
                     is ResponseState.Failure -> {
@@ -118,6 +132,19 @@ class LoggedOutViewModel @Inject constructor(
                     else -> {
                         throw IllegalArgumentException("Unexpected response type: $response")
                     }
+                }
+            }
+        }
+    }
+
+
+    fun determineNextRoute(firebaseUser: FirebaseUser?, onRoute: (String) -> Unit) {
+        if (firebaseUser == null) {
+            onRoute(StartDestination.Start.route)
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                dbRepo.getUserData(firebaseUser.uid).collect { user ->
+                    viewModelScope.launch(Dispatchers.Main) { onRoute(getRoute(user)) }
                 }
             }
         }

@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -54,40 +56,76 @@ import androidx.compose.ui.unit.sp
 import com.jalloft.lero.R
 import com.jalloft.lero.ui.components.NormalTextField
 import com.jalloft.lero.ui.components.RegisterScaffold
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.util.UserFields
+import timber.log.Timber
 
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HobbiesScreen(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
-    var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val user = registrationViewModel.userState
+
     var value by remember { mutableStateOf("") }
     val hobbies = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(key1 = user, block = {
+        if (user != null && hobbies.isEmpty()) {
+            hobbies.addAll(user.hobbies)
+        }
+    })
+
+
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            onNext()
+            registrationViewModel.clear()
+        }
+    })
+
 
     RegisterScaffold(
         title = stringResource(R.string.hobbies_and_interests),
         subtitle = stringResource(R.string.hobbies_and_interests_subtitle),
         onBack = onBack,
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
         enabledSubmitButton = hobbies.isNotEmpty(),
-        onSubmit = { isLoading = true },
+        onSubmit = {
+            if (hobbies != user?.hobbies) {
+                val updates = mapOf(
+                    UserFields.HOBBIES to hobbies,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            } else {
+                Timber.i("Dados não alterados e não atualizados")
+                onNext()
+            }
+        },
         onSkip = onNext,
-        isLoading = isLoading
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
         NormalTextField(
             label = stringResource(R.string.your_hobbies_label),
             placeholder = stringResource(R.string.your_hobbies_palceholder),
             value = value,
             onValueChange = { if (it.trim().length <= 20) value = it },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    if (value.trim().length > 1){
+                    if (value.trim().length > 1) {
                         hobbies.add(value)
                         value = ""
                     }
@@ -113,7 +151,7 @@ fun HobbiesScreen(
                             Icon(
                                 imageVector = Icons.Rounded.Close,
                                 contentDescription = stringResource(id = R.string.remove_o_hobbie),
-                                modifier = Modifier.clickable {  hobbies.remove(hobbie) }
+                                modifier = Modifier.clickable { hobbies.remove(hobbie) }
                             )
                         },
                         label = {

@@ -42,7 +42,7 @@ fun RegisterScaffold(
     errorMessage: String? = null,
     isLoading: Boolean = false,
     enabledSubmitButton: Boolean = true,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onSubmit: (() -> Unit)? = null,
     onSkip: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -59,12 +59,15 @@ fun RegisterScaffold(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, enabled = !isLoading) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = stringResource(id = R.string.back)
-                )
+            if (onBack != null){
+                IconButton(onClick = onBack, enabled = !isLoading) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.back)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.weight(1f))
             if (onSkip != null) {
                 TextButton(onClick = onSkip, enabled = !isLoading) {
                     Text(text = stringResource(R.string.pular).uppercase())

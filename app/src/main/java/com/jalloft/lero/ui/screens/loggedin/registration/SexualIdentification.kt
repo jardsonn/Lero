@@ -27,11 +27,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,19 +48,46 @@ import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
 import com.jalloft.lero.ui.theme.LeroTheme
+import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.util.UserFields
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SexualIdentification(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
-    var gender by remember { mutableStateOf<SexualGender?>(null) }
-    var orientation by remember { mutableStateOf<SexualOrientation?>(null) }
+    val context = LocalContext.current
+
+    val user = registrationViewModel.userState
+
+    var gender by remember { mutableStateOf(user?.gender) }
+    var orientation by remember { mutableStateOf(user?.orientation) }
+
+    LaunchedEffect(key1 = user, block = {
+        if (user != null) {
+            if (gender == null) {
+                gender = user.gender
+            }
+            if (orientation == null) {
+                orientation = user.orientation
+            }
+        }
+    })
+
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            registrationViewModel.clear()
+            onNext()
+        }
+    })
+
     val isvalidSubmit = gender != null && orientation != null
-    var isLoading by remember { mutableStateOf(false) }
 
     var showSexualGenderOptions by remember { mutableStateOf(false) }
     var showSexualOrientationOptions by remember { mutableStateOf(false) }
@@ -71,8 +100,21 @@ fun SexualIdentification(
         enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
         onSubmit = {
+            if (gender != user?.gender || orientation != user?.orientation) {
+                val updates = mapOf(
+                    UserFields.GENDER to gender,
+                    UserFields.ORIENTATION to orientation,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            } else {
+                Timber.i("Dados não alterados e não atualizados")
+                registrationViewModel.clear()
+                onNext()
+            }
         },
-        isLoading = isLoading
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
 
         SelectableTextField(
@@ -105,7 +147,7 @@ fun SexualIdentification(
         )
     }
 
-     if (showlOrientationInformation) {
+    if (showlOrientationInformation) {
         DialogInformation(
             onDismissRequest = { showlOrientationInformation = false },
             confirmButton = { showlOrientationInformation = false },
@@ -168,19 +210,18 @@ fun SexualIdentification(
 }
 
 
-
-@Preview
-@Composable
-fun PreviewSexualIdentificationPage() {
-    LeroTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            SexualIdentification(
-                onBack = {},
-                onNext = {}
-            )
-        }
-    }
-}
+//@Preview
+//@Composable
+//fun PreviewSexualIdentificationPage() {
+//    LeroTheme {
+//        Surface(
+//            modifier = Modifier.fillMaxSize(),
+//            color = MaterialTheme.colorScheme.background
+//        ) {
+//            SexualIdentification(
+//                onBack = {},
+//                onNext = {}
+//            )
+//        }
+//    }
+//}

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseUser
 import com.jalloft.lero.R
 import com.jalloft.lero.exception.FirebaseAuthExceptionHandler
 import com.jalloft.lero.ui.components.LeroButton
@@ -50,7 +51,7 @@ fun VerifyPhoneScreen(
     viewModel: LoggedOutViewModel,
     verificationId: String,
     phoneNumber: String,
-    onAuthenticated: () -> Unit,
+    onAuthenticated: (FirebaseUser?) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -64,7 +65,7 @@ fun VerifyPhoneScreen(
     LaunchedEffect(key1 = viewModel.signInWithPhoneSuccess, block = {
         if (viewModel.signInWithPhoneSuccess == null) {
             Timber.i("SignInWithPhone::Success autenticado")
-            onAuthenticated()
+            onAuthenticated(null)
         } else {
             Timber.i("SignInWithPhone::Success confirmar codigo - ${viewModel.signInWithPhoneSuccess?.first}")
             viewModel.signInWithPhoneSuccess?.first?.let { newVerificationId = it }
@@ -81,7 +82,7 @@ fun VerifyPhoneScreen(
 
             is ResponseState.Success -> {
                 signInLoading = false
-                onAuthenticated()
+                onAuthenticated(response.data)
                 Timber.i("SignInWithPhone::Success autenticado")
             }
 

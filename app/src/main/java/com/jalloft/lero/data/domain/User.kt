@@ -21,7 +21,7 @@ data class User(
     val orientation: SexualOrientation? = null,
     val education: Education? = null,
     val location: String? = null,
-    val religionId: Religion = Religion.NON_INFORM,
+    val religion: Religion = Religion.NON_INFORM,
     val city: City? = null,
     val work: Work? = null,
     val drinker: Drinker = Drinker.NON_INFORM,

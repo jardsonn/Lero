@@ -34,4 +34,6 @@ interface FirebaseAuthRepository {
         signInResponse: (ResponseState<FirebaseUser?>) -> Unit,
     )
 
+    fun firebaseUser(): FirebaseUser?
+
 }

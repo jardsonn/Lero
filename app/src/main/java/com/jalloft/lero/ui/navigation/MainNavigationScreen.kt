@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.jalloft.lero.ui.screens.loggedout.viewmodel.LoggedOutViewModel
+import com.orhanobut.hawk.Hawk
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -22,7 +23,6 @@ fun MainNavigationScreen(navController: NavHostController, loggedOutViewModel: L
     if (screensBottomMenu.map { it.route }.contains(currentRoute)) {
         Scaffold(
             bottomBar = {
-//            BottomAppBar { BottomNavigationBar(navController = navController) }
                 BottomNavigationBar(navController = navController)
 
         }) { LeroNavigation(navController = navController, loggedOutViewModel) }
@@ -31,6 +31,8 @@ fun MainNavigationScreen(navController: NavHostController, loggedOutViewModel: L
     }
 
     navController.addOnDestinationChangedListener { _, destination, _ ->
-        destination.route?.let { currentRoute = it }
+        destination.route?.let { route ->
+            currentRoute = route
+        }
     }
 }

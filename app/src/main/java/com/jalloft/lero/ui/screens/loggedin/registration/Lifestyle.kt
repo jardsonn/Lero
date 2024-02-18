@@ -8,12 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
@@ -26,15 +28,23 @@ import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
+import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LifestyleScreen(
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: (() -> Unit)?,
+    onNext: () -> Unit,
+    registrationViewModel: RegistrationViewModel,
 ) {
+
+    val context = LocalContext.current
+    val user = registrationViewModel.userState
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -44,9 +54,30 @@ fun LifestyleScreen(
     var children by remember { mutableStateOf<Children?>(null) }
     var religion by remember { mutableStateOf<Religion?>(null) }
 
+    LaunchedEffect(key1 = user, block = {
+        if (user != null) {
+            if (smoker == null) {
+                smoker = user.smoker
+            }
+            if (drinker == null) {
+                drinker = user.drinker
+            }
+            if (children == null) {
+                children = user.children
+            }
+            if (religion == null) {
+                religion = user.religion
+            }
+        }
+    })
 
-    val isvalidSubmit = true
-    var isLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
+        if (registrationViewModel.isSuccessUpdateOrEdit) {
+            onNext()
+            registrationViewModel.clear()
+        }
+    })
+
 
     var showChildrenOptions by remember { mutableStateOf(false) }
     var showDrinkerOptions by remember { mutableStateOf(false) }
@@ -56,11 +87,26 @@ fun LifestyleScreen(
     RegisterScaffold(
         title = stringResource(R.string.lifestyle),
         subtitle = stringResource(R.string.tell_about_your_lifistyle),
-        enabledSubmitButton = isvalidSubmit,
+//        enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
         onSkip = onNext,
-        onSubmit = {},
-        isLoading = isLoading
+        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        onSubmit = {
+            if (smoker != user?.smoker || drinker != user?.drinker || children != user?.children || religion != user?.religion) {
+                val updates = mapOf(
+                    UserFields.SMOKER to smoker,
+                    UserFields.DRINKER to drinker,
+                    UserFields.CHILDREN to children,
+                    UserFields.RELIGION to religion,
+                )
+                registrationViewModel.updateOrEdit(context, updates)
+                Timber.i("Dados atualizados")
+            }else{
+                Timber.i("Dados não alterados e não atualizados")
+                onNext()
+            }
+        },
+        isLoading = registrationViewModel.isLoadingUpdateOrEdit
     ) {
 
         SelectableTextField(
@@ -110,7 +156,9 @@ fun LifestyleScreen(
                 title = stringResource(R.string.you_have_children),
                 onBack = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) { showChildrenOptions = false }
+                        if (!sheetState.isVisible) {
+                            showChildrenOptions = false
+                        }
                     }
                 },
             ) {
@@ -136,7 +184,7 @@ fun LifestyleScreen(
         }
     }
 
-     if (showSmokerOptions) {
+    if (showSmokerOptions) {
         ModalBottomSheet(
             onDismissRequest = { showSmokerOptions = false },
             shape = BottomSheetDefaults.HiddenShape,
@@ -148,7 +196,9 @@ fun LifestyleScreen(
                 title = stringResource(R.string.smoker_placeholder),
                 onBack = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) { showSmokerOptions = false }
+                        if (!sheetState.isVisible) {
+                            showSmokerOptions = false
+                        }
                     }
                 },
             ) {
@@ -187,7 +237,9 @@ fun LifestyleScreen(
                 title = stringResource(R.string.drinker_placeholder),
                 onBack = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) { showDrinkerOptions = false }
+                        if (!sheetState.isVisible) {
+                            showDrinkerOptions = false
+                        }
                     }
                 },
             ) {
@@ -225,7 +277,9 @@ fun LifestyleScreen(
                 title = stringResource(R.string.religion_placeholder),
                 onBack = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) { showReligionOptions = false }
+                        if (!sheetState.isVisible) {
+                            showReligionOptions = false
+                        }
                     }
                 },
             ) {

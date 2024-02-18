@@ -1,5 +1,6 @@
 package com.jalloft.lero.util
 
+import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -18,8 +19,28 @@ object DataValidator {
         "CN" to "yyyyMMdd",
     )
 
+    fun dateToString(date: Date?): String? {
+        val countryCode = Locale.getDefault().country
+        val dateFormatPattern = countryDateFormats[countryCode] ?: "ddMMyyyy"
+        val dateFormat = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
+        return date?.let { dateFormat.format(it) }
+    }
 
-    fun isBirthDateValid(dateString: String): Int {
+    fun stringToDate(dateString: String?): Date? {
+        if (dateString == null) return null
+        val countryCode = Locale.getDefault().country
+        val dateFormatPattern = countryDateFormats[countryCode] ?: "ddMMyyyy"
+        val dateFormat = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
+        return dateFormat.parse(dateString)
+    }
+
+    fun stringToTimestamp(dateString: String?): Timestamp? {
+        return stringToDate(dateString)?.let { Timestamp((it)) }
+    }
+
+    fun isBirthDateValid(dateString: String?): Int {
+        if (dateString == null) return INVALID_DATE_FORMT
+
         val countryCode = Locale.getDefault().country
         val dateFormatPattern = countryDateFormats[countryCode] ?: "ddMMyyyy"
         val dateFormat = SimpleDateFormat(dateFormatPattern, Locale.getDefault())

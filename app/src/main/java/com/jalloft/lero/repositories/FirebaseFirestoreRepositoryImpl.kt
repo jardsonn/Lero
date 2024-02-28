@@ -34,10 +34,11 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
         emit(ResponseState.Loading)
         val userRef = userId?.let { usersRef.document(it) }
         try {
-            if (userRef == null) throw FirebaseFirestoreException(
-                "",
-                FirebaseFirestoreException.Code.UNAUTHENTICATED
-            )
+
+            if (userRef == null) {
+                emit(ResponseState.Failure())
+                return@flow
+            }
             userRef.set(updates, SetOptions.merge()).await()
             Timber.i("User data updated successfully")
             emit(ResponseState.Success(Unit))
@@ -237,12 +238,7 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
                 responseState(ResponseState.Success(snapshot.toObject<User?>()))
             } else {
                 responseState(
-                    ResponseState.Failure(
-                        FirebaseFirestoreException(
-                            "",
-                            FirebaseFirestoreException.Code.NOT_FOUND
-                        )
-                    )
+                    ResponseState.Failure(Exception("Current data: null"))
                 )
                 Timber.d("Current data: null")
             }

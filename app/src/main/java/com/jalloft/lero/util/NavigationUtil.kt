@@ -30,6 +30,8 @@ fun getRoute(user: User?): String{
             return RegisterDataDestination.Hobbies.route 
         } else if (user.bio == null) {
             return RegisterDataDestination.Bio.route 
+        } else if (user.photos.isNullOrEmpty() || user.profilePhoto == null) {
+            return RegisterDataDestination.Photo.route
         } else {
             return GraphDestination.LoggedIn.route 
         }

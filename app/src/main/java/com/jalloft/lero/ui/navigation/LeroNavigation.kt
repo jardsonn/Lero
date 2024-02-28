@@ -17,32 +17,33 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.google.firebase.auth.FirebaseAuth
 import com.jalloft.lero.ui.screens.loggedin.registration.BiographyScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.LifestyleScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.EssentialInformationScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.HobbiesScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.InterestScreen
+import com.jalloft.lero.ui.screens.loggedin.registration.LocalizationScreen
+import com.jalloft.lero.ui.screens.loggedin.registration.RegisterPhotoScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.SexualIdentification
 import com.jalloft.lero.ui.screens.loggedin.registration.WorkEducationScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.city.BirthplaceScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.city.CityViewModel
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
 import com.jalloft.lero.ui.screens.loggedout.SignInWithPhoneScreen
 import com.jalloft.lero.ui.screens.loggedout.StartScreen
 import com.jalloft.lero.ui.screens.loggedout.VerifyPhoneScreen
 import com.jalloft.lero.ui.screens.loggedout.viewmodel.LoggedOutViewModel
 import com.jalloft.lero.util.CURRENTE_REGISTRATION_ROUTE_KEY
 import com.jalloft.lero.util.MANDATORY_DATA_SAVED
-import com.jalloft.lero.util.getRoute
 import com.orhanobut.hawk.Hawk
 import timber.log.Timber
 
 
 @Composable
 fun LeroNavigation(navController: NavHostController, loggedOutViewModel: LoggedOutViewModel) {
-    val startDestination = getStartDestination(navController, loggedOutViewModel)
+    val startDestination = getStartDestination()
+//    val startDestination =  GraphDestination.DataRegistration.route
     val citySearchViewModel: CityViewModel = hiltViewModel()
-//    val registrationViewModel: RegistrationViewModel = hiltViewModel()
 
     val registerStartDestination by remember {
         mutableStateOf(
@@ -76,6 +77,7 @@ fun NavGraphBuilder.registerDataGraph(
 ) {
     navigation(
         startDestination = startDestination,
+//        startDestination = RegisterDataDestination.Localization.route,
         route = GraphDestination.DataRegistration.route,
     ) {
         composable(RegisterDataDestination.EssentialInformation.route) {
@@ -153,6 +155,28 @@ fun NavGraphBuilder.registerDataGraph(
             Hawk.put(CURRENTE_REGISTRATION_ROUTE_KEY, RegisterDataDestination.Bio.route)
             BiographyScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
+                onNext = {
+                    navController.navigate(RegisterDataDestination.Photo.route)
+                },
+                registrationViewModel = hiltViewModel()
+            )
+        }
+
+        composable(RegisterDataDestination.Photo.route){
+            Hawk.put(CURRENTE_REGISTRATION_ROUTE_KEY, RegisterDataDestination.Photo.route)
+            RegisterPhotoScreen(
+                onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
+                onNext = {
+                    navController.navigate(RegisterDataDestination.Localization.route)
+                },
+                registrationViewModel = hiltViewModel()
+            )
+        }
+
+        composable(RegisterDataDestination.Localization.route){
+            Hawk.put(CURRENTE_REGISTRATION_ROUTE_KEY, RegisterDataDestination.Localization.route)
+            LocalizationScreen(
+                onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onDone = {
                     navController.navigate(GraphDestination.LoggedIn.route) {
                         popUpTo(GraphDestination.DataRegistration.route) { inclusive = true }
@@ -178,7 +202,16 @@ fun NavGraphBuilder.loggedOutGraph(navController: NavController, viewModel: Logg
                 },
                 onSignInWithNumber = {
                     navController.navigate(StartDestination.LoginWithPhone.route)
-                }
+                },
+                onAuthenticated = { firebaseUser ->
+                    val user = firebaseUser ?: viewModel.firebaseUser
+                    viewModel.determineNextRoute(user) {
+                        navController.navigate(it) {
+                            popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
+                        }
+                    }
+                },
+                viewModel = viewModel
             )
         }
         composable(StartDestination.LoginWithPhone.route) {
@@ -188,8 +221,14 @@ fun NavGraphBuilder.loggedOutGraph(navController: NavController, viewModel: Logg
                     navController.navigate(StartDestination.VerifyPhone.route.plus("/?verificationId=${verificationId}&phoneNumber=$phoneNumber"))
                 },
                 onAuthenticated = {
-                    navController.navigate(GraphDestination.LoggedIn.route) {
-                        popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
+//                    navController.navigate(GraphDestination.LoggedIn.route) {
+//                        popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
+//                    }
+                    val user = viewModel.firebaseUser
+                    viewModel.determineNextRoute(user) {
+                        navController.navigate(it) {
+                            popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
+                        }
                     }
                 },
                 onBack = {
@@ -251,16 +290,13 @@ sealed class GraphDestination(val route: String) {
     data object DataRegistration : GraphDestination("dataRegistration")
 }
 
-fun getStartDestination(
-    navController: NavHostController,
-    loggedOutViewModel: LoggedOutViewModel
-): String {
-    val isAuthenticated = loggedOutViewModel.isAuthenticated
-    return if (isAuthenticated) {
+fun getStartDestination(): String {
+    return if (FirebaseAuth.getInstance().currentUser != null) {
         if (!Hawk.contains(MANDATORY_DATA_SAVED) || !Hawk.get<Boolean?>(MANDATORY_DATA_SAVED)) {
             GraphDestination.DataRegistration.route
-        } else
+        } else {
             GraphDestination.LoggedIn.route
+        }
     } else {
         GraphDestination.LoggedOut.route
     }

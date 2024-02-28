@@ -1,8 +1,11 @@
 package com.jalloft.lero.ui.screens.loggedout
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +28,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -44,17 +51,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseUser
 import com.jalloft.lero.R
+import com.jalloft.lero.ui.screens.loggedout.viewmodel.LoggedOutViewModel
 import com.jalloft.lero.util.CommonUtil
+import timber.log.Timber
 
 
 @Composable
 fun StartScreen(
     onBack: () -> Unit,
-    onSignInWithNumber: () -> Unit
+    onSignInWithNumber: () -> Unit,
+    onAuthenticated: (FirebaseUser?) -> Unit,
+    viewModel: LoggedOutViewModel
 ) {
 
     val context = LocalContext.current
+
+//    var isSignInLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = viewModel.signInWithGoogleSuccess, block = {
+        if (viewModel.signInWithGoogleSuccess != null) {
+            Timber.i("SignInWithGoogle::Success autenticado")
+            onAuthenticated(viewModel.signInWithGoogleSuccess)
+        }
+    })
+
+    val googleLoginLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = {
+            println("O codigo é esse: ${it.resultCode} e o outro é esse ${Activity.RESULT_OK}")
+            if (it.resultCode == Activity.RESULT_OK) {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
+                viewModel.handleGoogleSignInResult(context, task)
+            }
+        }
+    )
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -98,13 +133,24 @@ fun StartScreen(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.entrar_com_o_google).uppercase(),
                 icon = painterResource(id = R.drawable.ic_google),
-                onClick = {}
+                enabled = !viewModel.signInWithGoogleLoading,
+                onClick = {
+                    val signInOptions = GoogleSignInOptions
+                        .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(context.getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build()
+                    val googleSignInClient = GoogleSignIn.getClient(context, signInOptions)
+                    val signInIntent = googleSignInClient.signInIntent
+                    googleLoginLauncher.launch(signInIntent)
+                }
             )
 
             SignInButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.entrar_com_o_facebook).uppercase(),
                 icon = painterResource(id = R.drawable.ic_facebook),
+                enabled = !viewModel.signInWithGoogleLoading,
                 onClick = {}
             )
 
@@ -112,6 +158,7 @@ fun StartScreen(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.entrar_com_o_celular).uppercase(),
                 icon = painterResource(id = R.drawable.ic_sms),
+                enabled = !viewModel.signInWithGoogleLoading,
                 onClick = onSignInWithNumber
             )
 
@@ -122,10 +169,11 @@ fun StartScreen(
 }
 
 @Composable
-fun SignInButton(modifier: Modifier, text: String, icon: Painter, onClick: () -> Unit) {
+fun SignInButton(modifier: Modifier, text: String, icon: Painter, enabled: Boolean = true, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = 52.dp),
+        enabled = enabled,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(.2f)),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colorScheme.onBackground

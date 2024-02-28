@@ -1,6 +1,5 @@
 package com.jalloft.lero.ui.screens.loggedin.registration
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -20,12 +18,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,18 +30,16 @@ import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.DataValidator
 import com.jalloft.lero.util.MANDATORY_DATA_SAVED
 import com.jalloft.lero.util.UserFields
 import com.orhanobut.hawk.Hawk
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
 @Composable
 fun BiographyScreen(
     onBack: (() -> Unit)?,
-    onDone: () -> Unit,
+    onNext: () -> Unit,
     registrationViewModel: RegistrationViewModel,
 ) {
 
@@ -61,8 +55,8 @@ fun BiographyScreen(
 
     LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
         if (registrationViewModel.isSuccessUpdateOrEdit) {
-            onDone()
-            Hawk.put(MANDATORY_DATA_SAVED, true)
+            onNext()
+//            Hawk.put(MANDATORY_DATA_SAVED, true)
             registrationViewModel.clear()
         }
     })
@@ -74,7 +68,7 @@ fun BiographyScreen(
         title = stringResource(R.string.biography_title),
         subtitle = stringResource(R.string.biography_subtitle),
         onBack = onBack,
-        textButton = stringResource(R.string.done),
+        textButton = stringResource(R.string.advance),
         onSubmit = {
             if (bio != user?.bio) {
                 val updates = mapOf(
@@ -84,13 +78,13 @@ fun BiographyScreen(
                 Timber.i("Dados atualizados")
             } else {
                 Timber.i("Dados não alterados e não atualizados")
-                onDone()
-                Hawk.put(MANDATORY_DATA_SAVED, true)
+                onNext()
+//                Hawk.put(MANDATORY_DATA_SAVED, true)
             }
         },
         onSkip = {
-            Hawk.put(MANDATORY_DATA_SAVED, true)
-            onDone()
+//            Hawk.put(MANDATORY_DATA_SAVED, true)
+            onNext()
         },
         errorMessage = registrationViewModel.erroUpdateOrEdit,
         isLoading = registrationViewModel.isLoadingUpdateOrEdit

@@ -144,6 +144,8 @@ fun HobbiesScreen(
                         onClick = { },
                         shape = CircleShape,
                         border = InputChipDefaults.inputChipBorder(
+                            enabled = true,
+                            selected = false,
                             borderWidth = 2.dp,
                             borderColor = MaterialTheme.colorScheme.onBackground.copy(.1f)
                         ),

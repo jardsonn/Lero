@@ -1,6 +1,7 @@
 package com.jalloft.lero.repositories
 
 import android.app.Activity
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.PhoneAuthCredential
@@ -19,7 +20,7 @@ interface FirebaseAuthRepository {
 
     suspend fun deleteUser(): Flow<ResponseState<Unit>>
 
-    suspend fun signInWithGoogle(idToken: String): Flow<ResponseState<Boolean>>
+    suspend fun signInWithGoogle(idToken: String): Flow<ResponseState<FirebaseUser?>>
 
     fun signInWithPhone(
         activity: Activity,

@@ -204,7 +204,18 @@
     <string name="error_firestore_unavailable">O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde.</string>
     <string name="error_firestore_data_loss">Houve uma perda de dados. Por favor, entre em contato com o suporte técnico para obter assistência.</string>
     <string name="error_firestore_generic">Ocorreu um erro: %1$s, %2$s. Por favor, tente novamente mais tarde.</string>
-    <string name="error_firestore_generic_execption_null">Ocorreu um erro inesperado! Por favor, tente novamente mais tarde.</string>
+    <string name="error_firebase_generic_execption_null">Ocorreu um erro inesperado! Por favor, tente novamente mais tarde.</string>
+
+    <string name="error_storage_bucket_not_found">Desculpe, o armazenamento não está disponível no momento. Tente novamente mais tarde.</string>
+    <string name="error_storage_project_not_found">Houve um problema ao acessar o armazenamento. Por favor, verifique sua conexão com a internet e tente novamente.</string>
+    <string name="error_storage_quota_exceeded">O limite de armazenamento foi atingido. Por favor, libere espaço ou entre em contato com o suporte para obter assistência.</string>
+    <string name="error_storage_not_authenticated">Você não está autenticado para acessar o armazenamento. Por favor, faça login e tente novamente.</string>
+    <string name="error_storage_not_authorized">Você não tem permissão para acessar este recurso de armazenamento. Por favor, entre em contato com o administrador para obter acesso.</string>
+    <string name="error_storage_retry_limit_exceeded">Houve muitas tentativas de acesso. Por favor, tente novamente mais tarde.</string>
+    <string name="error_storage_invalid_checksum">Ocorreu um erro ao verificar a integridade dos dados. Por favor, tente novamente mais tarde.</string>
+    <string name="error_storage_canceled">A operação de armazenamento foi cancelada. Por favor, tente novamente.</string>
+    <string name="error_storage_unknown">Ocorreu um erro desconhecido ao acessar o armazenamento. Por favor, tente novamente mais tarde.</string>
+    <string name="error_storage_generic">Ocorreu um erro ao acessar o armazenamento (Código: %1$d). Detalhes: %2$s</string>
 
 
 </resources>

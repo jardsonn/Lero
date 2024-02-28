@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.jalloft.lero"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -62,8 +62,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
 //    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3:1.1.2")
-    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.valentinilk.shimmer:compose-shimmer:1.2.0")
@@ -72,6 +72,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -84,9 +85,14 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.50")
     kapt("androidx.hilt:hilt-compiler:1.1.0")
 
-    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.2")
 
     implementation("com.orhanobut:hawk:2.0.1")
+
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -60,17 +60,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             emit(ResponseState.Loading)
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = auth.signInWithCredential(credential).await()
-            authResult.additionalUserInfo?.apply {
-//                if (isNewUser) {
-//                    createUserInFirestore(FieldValue.serverTimestamp()).collect {
-//                        if (it !is Response.Loading) {
-//                            emit(Response.Success(isNewUser))
-//                        }
-//                    }
-//                } else {
-//                    emit(Response.Success(isNewUser))
-//                }
-            }
+            emit(ResponseState.Success(authResult.user))
         } catch (e: Exception) {
             Timber.w("signInWithGoogle:failure", e.message)
             emit(ResponseState.Failure(e, e.message))

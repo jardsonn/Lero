@@ -10,4 +10,6 @@ sealed class RegisterDataDestination(val route: String) {
     data object Lifestyle : RegisterDataDestination(route = "lifestyle")
     data object Hobbies : RegisterDataDestination(route = "hobbies")
     data object Bio : RegisterDataDestination(route = "bio")
+    data object Photo : RegisterDataDestination(route = "photo")
+    data object Localization : RegisterDataDestination(route = "localization")
 }

@@ -1,6 +1,7 @@
 package com.jalloft.lero.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -8,16 +9,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,14 +40,16 @@ import com.jalloft.lero.R
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RegisterScaffold(
-    title: String,
+    title: String? = null,
     subtitle: String? = null,
     textButton: String = stringResource(R.string.advance),
+    textSecundaryButton: String = "",
     errorMessage: String? = null,
     isLoading: Boolean = false,
     enabledSubmitButton: Boolean = true,
     onBack: (() -> Unit)?,
     onSubmit: (() -> Unit)? = null,
+    onSecundarySubmit: (() -> Unit)? = null,
     onSkip: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -59,7 +65,7 @@ fun RegisterScaffold(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (onBack != null){
+            if (onBack != null) {
                 IconButton(onClick = onBack, enabled = !isLoading) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBack,
@@ -76,13 +82,15 @@ fun RegisterScaffold(
         }
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp
+            if (!title.isNullOrEmpty()) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 32.sp
+                    )
                 )
-            )
+            }
             if (!subtitle.isNullOrEmpty()) {
                 Text(
                     text = subtitle,
@@ -121,6 +129,18 @@ fun RegisterScaffold(
                     enabled = enabledSubmitButton && !isLoading,
                     onClick = onSubmit,
                 )
+            }
+
+            if (onSecundarySubmit != null) {
+                Spacer(modifier = Modifier.size(16.dp))
+                OutlinedButton(
+                    onClick = onSecundarySubmit,
+                    enabled = enabledSubmitButton && !isLoading,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                ) {
+                    Text(text = textSecundaryButton)
+                }
             }
 
         }

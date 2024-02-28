@@ -7,5 +7,6 @@ import com.google.firebase.Timestamp
  */
 data class Photo(
     val url: String? = null,
+    val name: String? = null,
     val userCreatedIn: Timestamp? = null,
 )

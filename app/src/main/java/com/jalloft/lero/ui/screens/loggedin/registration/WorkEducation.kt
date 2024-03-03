@@ -26,8 +26,7 @@ import com.jalloft.lero.ui.components.NormalTextField
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
 import timber.log.Timber
 
@@ -36,11 +35,11 @@ import timber.log.Timber
 fun WorkEducationScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     var profession by remember { mutableStateOf("") }
     var company by remember { mutableStateOf("") }
@@ -65,9 +64,9 @@ fun WorkEducationScreen(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
-            registrationViewModel.clear()
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
+            leroViewModel.clear()
             onNext()
         }
     })
@@ -84,22 +83,22 @@ fun WorkEducationScreen(
         enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
         onSkip = onNext,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
             if (education != user?.education || profession != user.work?.profission || company != user.work.company) {
                 val updates = mapOf(
                     UserFields.WORK to Work(profession, company),
                     UserFields.EDUCATION to education,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             }else{
                 Timber.i("Dados não alterados e não atualizados")
-                registrationViewModel.clear()
+                leroViewModel.clear()
                 onNext()
             }
         },
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
         NormalTextField(
             label = stringResource(R.string.profission),

@@ -29,10 +29,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
 import com.jalloft.lero.ui.components.RegisterScaffold
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.MANDATORY_DATA_SAVED
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
-import com.orhanobut.hawk.Hawk
 import timber.log.Timber
 
 
@@ -40,11 +38,11 @@ import timber.log.Timber
 fun BiographyScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
     var bio by remember { mutableStateOf("") }
 
     LaunchedEffect(key1 = user, block = {
@@ -53,11 +51,11 @@ fun BiographyScreen(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
             onNext()
 //            Hawk.put(MANDATORY_DATA_SAVED, true)
-            registrationViewModel.clear()
+            leroViewModel.clear()
         }
     })
 
@@ -74,7 +72,7 @@ fun BiographyScreen(
                 val updates = mapOf(
                     UserFields.BIO to bio,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             } else {
                 Timber.i("Dados não alterados e não atualizados")
@@ -86,8 +84,8 @@ fun BiographyScreen(
 //            Hawk.put(MANDATORY_DATA_SAVED, true)
             onNext()
         },
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        errorMessage = leroViewModel.erroUpdateOrEdit,
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
         Text(
             text = stringResource(R.string.bio),

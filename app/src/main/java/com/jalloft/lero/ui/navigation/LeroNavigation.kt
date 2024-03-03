@@ -3,6 +3,10 @@ package com.jalloft.lero.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseAuth
+import com.jalloft.lero.ui.screens.loggedin.main.ProfileScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.BiographyScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.LifestyleScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.EssentialInformationScreen
@@ -33,6 +38,7 @@ import com.jalloft.lero.ui.screens.loggedout.SignInWithPhoneScreen
 import com.jalloft.lero.ui.screens.loggedout.StartScreen
 import com.jalloft.lero.ui.screens.loggedout.VerifyPhoneScreen
 import com.jalloft.lero.ui.screens.loggedout.viewmodel.LoggedOutViewModel
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.CURRENTE_REGISTRATION_ROUTE_KEY
 import com.jalloft.lero.util.MANDATORY_DATA_SAVED
 import com.orhanobut.hawk.Hawk
@@ -40,10 +46,12 @@ import timber.log.Timber
 
 
 @Composable
-fun LeroNavigation(navController: NavHostController, loggedOutViewModel: LoggedOutViewModel) {
+fun LeroNavigation(contentPadding: PaddingValues = PaddingValues(), navController: NavHostController) {
     val startDestination = getStartDestination()
 //    val startDestination =  GraphDestination.DataRegistration.route
     val citySearchViewModel: CityViewModel = hiltViewModel()
+    val leroViewModel: LeroViewModel = hiltViewModel()
+    val loggedOutViewModel: LoggedOutViewModel = hiltViewModel()
 
     val registerStartDestination by remember {
         mutableStateOf(
@@ -55,15 +63,15 @@ fun LeroNavigation(navController: NavHostController, loggedOutViewModel: LoggedO
     }
     SlideNavHost(
         navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        modifier = Modifier.padding(contentPadding)
     ) {
         loggedOutGraph(navController, loggedOutViewModel)
-        loggedInGraph(navController)
+        loggedInGraph(navController, leroViewModel)
         registerDataGraph(
             navController,
             citySearchViewModel = citySearchViewModel,
             startDestination = registerStartDestination
-//            registrationViewModel = registrationViewModel
         )
     }
 }
@@ -73,7 +81,7 @@ fun NavGraphBuilder.registerDataGraph(
     navController: NavHostController,
     citySearchViewModel: CityViewModel,
     startDestination: String,
-//    registrationViewModel: RegistrationViewModel,
+//    leroViewModel: RegistrationViewModel,
 ) {
     navigation(
         startDestination = startDestination,
@@ -88,7 +96,7 @@ fun NavGraphBuilder.registerDataGraph(
             EssentialInformationScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.SexualIdentification.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -100,7 +108,7 @@ fun NavGraphBuilder.registerDataGraph(
             SexualIdentification(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.Birthplace.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
         composable(RegisterDataDestination.Birthplace.route) {
@@ -109,7 +117,7 @@ fun NavGraphBuilder.registerDataGraph(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.Interest.route) },
                 citySearchViewModel = citySearchViewModel,
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -118,7 +126,7 @@ fun NavGraphBuilder.registerDataGraph(
             InterestScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.WorkAndEducation.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -130,7 +138,7 @@ fun NavGraphBuilder.registerDataGraph(
             WorkEducationScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.Lifestyle.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -139,7 +147,7 @@ fun NavGraphBuilder.registerDataGraph(
             LifestyleScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.Hobbies.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -148,7 +156,7 @@ fun NavGraphBuilder.registerDataGraph(
             HobbiesScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = { navController.navigate(RegisterDataDestination.Bio.route) },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
         composable(RegisterDataDestination.Bio.route) {
@@ -158,22 +166,22 @@ fun NavGraphBuilder.registerDataGraph(
                 onNext = {
                     navController.navigate(RegisterDataDestination.Photo.route)
                 },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
-        composable(RegisterDataDestination.Photo.route){
+        composable(RegisterDataDestination.Photo.route) {
             Hawk.put(CURRENTE_REGISTRATION_ROUTE_KEY, RegisterDataDestination.Photo.route)
             RegisterPhotoScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
                 onNext = {
                     navController.navigate(RegisterDataDestination.Localization.route)
                 },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
-        composable(RegisterDataDestination.Localization.route){
+        composable(RegisterDataDestination.Localization.route) {
             Hawk.put(CURRENTE_REGISTRATION_ROUTE_KEY, RegisterDataDestination.Localization.route)
             LocalizationScreen(
                 onBack = if (navController.previousBackStackEntry == null) null else ({ navController.popBackStack() }),
@@ -182,7 +190,7 @@ fun NavGraphBuilder.registerDataGraph(
                         popUpTo(GraphDestination.DataRegistration.route) { inclusive = true }
                     }
                 },
-                registrationViewModel = hiltViewModel()
+                leroViewModel = hiltViewModel()
             )
         }
 
@@ -271,7 +279,7 @@ fun NavGraphBuilder.loggedOutGraph(navController: NavController, viewModel: Logg
 }
 
 
-fun NavGraphBuilder.loggedInGraph(navController: NavController) {
+fun NavGraphBuilder.loggedInGraph(navController: NavController, viewModel: LeroViewModel) {
     navigation(
         startDestination = BottomNavigationDestination.Home.route,
         route = GraphDestination.LoggedIn.route,
@@ -280,7 +288,12 @@ fun NavGraphBuilder.loggedInGraph(navController: NavController) {
         composable(BottomNavigationDestination.Like.route) {}
         composable(BottomNavigationDestination.Match.route) {}
         composable(BottomNavigationDestination.Message.route) {}
-        composable(BottomNavigationDestination.Profile.route) {}
+        composable(BottomNavigationDestination.Profile.route) {
+            ProfileScreen(
+                onBackSignIn = {},
+                leroViewModel = viewModel
+            )
+        }
     }
 }
 
@@ -319,25 +332,25 @@ fun SlideNavHost(
         route = route,
         popEnterTransition = {
             slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Right,
+                AnimatedContentTransitionScope.SlideDirection.End,
                 animationSpec = tween(350)
             )
         },
         popExitTransition = {
             slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Right,
+                AnimatedContentTransitionScope.SlideDirection.End,
                 animationSpec = tween(300)
             )
         },
         enterTransition = {
             slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
+                AnimatedContentTransitionScope.SlideDirection.Start,
                 animationSpec = tween(400)
             )
         },
         exitTransition = {
             slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
+                AnimatedContentTransitionScope.SlideDirection.Start,
                 animationSpec = tween(400)
             )
         },

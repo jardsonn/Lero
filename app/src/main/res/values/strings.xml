@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">Lero</string>
+    <string name="default_web_client_id" translatable="false">81909610041-405vg5pbhia1eh9nogulh40hq17rndp8.apps.googleusercontent.com</string>
+
+    <string name="app_name" translatable="false">Lero</string>
     <string name="home">Home</string>
     <string name="likes">Curtidas</string>
     <string name="matches">Matches</string>
@@ -216,6 +218,10 @@
     <string name="error_storage_canceled">A operação de armazenamento foi cancelada. Por favor, tente novamente.</string>
     <string name="error_storage_unknown">Ocorreu um erro desconhecido ao acessar o armazenamento. Por favor, tente novamente mais tarde.</string>
     <string name="error_storage_generic">Ocorreu um erro ao acessar o armazenamento (Código: %1$d). Detalhes: %2$s</string>
+    <string name="dating_profile">Perfil de namoro</string>
+    <string name="edit_profile">Editar perfil</string>
+    <string name="preferences">Preferências</string>
+    <string name="no_photos_yet">Ainda não há fotos</string>
 
 
 </resources>

@@ -7,7 +7,7 @@ import java.util.*
 /**
  * Created by Jardson Costa on 10/02/2024.
  */
-object DataValidator {
+object DateUtil {
 
     const val INVALID_DATE_FORMT = 0
     const val INVALID_DATE_MINOR = 1
@@ -79,6 +79,20 @@ object DataValidator {
         } catch (e: Exception) {
             INVALID_DATE_FORMT
         }
+    }
+
+    fun calculateAge(dateOfBirth: Date?): Int {
+        val currentDate = Calendar.getInstance()
+        val dob = Calendar.getInstance()
+        if (dateOfBirth != null) {
+            dob.time = dateOfBirth
+        }
+
+        var age = currentDate.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+        if (currentDate.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+            age--
+        }
+        return age
     }
 
 }

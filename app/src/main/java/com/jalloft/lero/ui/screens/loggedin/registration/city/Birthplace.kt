@@ -13,8 +13,7 @@ import com.jalloft.lero.data.domain.City
 import com.jalloft.lero.ui.components.AnimatedComponent
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
 import timber.log.Timber
 
@@ -22,13 +21,13 @@ import timber.log.Timber
 @Composable
 fun BirthplaceScreen(
     citySearchViewModel: CityViewModel,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
 ) {
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     var city by remember { mutableStateOf<City?>(null) }
 
@@ -38,9 +37,9 @@ fun BirthplaceScreen(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
-            registrationViewModel.clear()
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
+            leroViewModel.clear()
             onNext()
         }
     })
@@ -52,21 +51,21 @@ fun BirthplaceScreen(
         subtitle = stringResource(R.string.what_city_were_you_born_in),
         enabledSubmitButton = city != null,
         onBack = onBack,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
             if (city != user?.city){
                 val updates = mapOf(
                     UserFields.CITY to city,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             }else{
                 Timber.i("Dados não alterados e não atualizados")
-                registrationViewModel.clear()
+                leroViewModel.clear()
                 onNext()
             }
         },
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
         SelectableTextField(
             label = stringResource(R.string.birthplace_field_title),

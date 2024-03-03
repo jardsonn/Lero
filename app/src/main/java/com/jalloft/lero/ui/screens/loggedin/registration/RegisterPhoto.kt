@@ -57,14 +57,12 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jalloft.lero.R
 import com.jalloft.lero.data.domain.Photo
+import com.jalloft.lero.ui.components.PhotoItem
 import com.jalloft.lero.ui.components.RegisterScaffold
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.CommonUtil
-import com.jalloft.lero.util.MANDATORY_DATA_SAVED
 import com.jalloft.lero.util.UserFields
-import com.orhanobut.hawk.Hawk
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 sealed interface PhotoOption {
     data object Idle : PhotoOption
@@ -78,13 +76,13 @@ sealed interface PhotoOption {
 fun RegisterPhotoScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     var photoOptionSelected by remember { mutableStateOf<PhotoOption>(PhotoOption.Idle) }
     var showPhotoDialog by remember { mutableStateOf(false) }
@@ -108,17 +106,17 @@ fun RegisterPhotoScreen(
     })
 
     LaunchedEffect(
-        key1 = registrationViewModel.isLoadedProfilePhoto,
-        key2 = registrationViewModel.isLoadedCollectionPhoto,
+        key1 = leroViewModel.isLoadedProfilePhoto,
+        key2 = leroViewModel.isLoadedCollectionPhoto,
         block = {
-            if (registrationViewModel.isLoadedProfilePhoto && registrationViewModel.isLoadedCollectionPhoto) {
-//            val photos = mapOf(UserFields.PHOTOS to registrationViewModel.successCollectionPhoto)
+            if (leroViewModel.isLoadedProfilePhoto && leroViewModel.isLoadedCollectionPhoto) {
+//            val photos = mapOf(UserFields.PHOTOS to leroViewModel.successCollectionPhoto)
                 val photos = mapOf(
-                    UserFields.PROFILE_PHOTO to registrationViewModel.successProfilePhoto,
-                    UserFields.PHOTOS to registrationViewModel.successCollectionPhoto
+                    UserFields.PROFILE_PHOTO to leroViewModel.successProfilePhoto,
+                    UserFields.PHOTOS to leroViewModel.successCollectionPhoto
                 )
 
-                registrationViewModel.updateOrEdit(context, photos)
+                leroViewModel.updateOrEdit(context, photos)
             }
         })
 
@@ -160,12 +158,10 @@ fun RegisterPhotoScreen(
     )
 
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
             onNext()
-//            Hawk.put(MANDATORY_DATA_SAVED, true)
-            registrationViewModel.clear()
-            Timber.i("Salvoooooooo")
+            leroViewModel.clear()
         }
     })
 
@@ -175,17 +171,22 @@ fun RegisterPhotoScreen(
         onBack = onBack,
         textButton = stringResource(R.string.advance),
         onSubmit = {
-            if (currentProfilePhoto?.name == null) {
-                registrationViewModel.saveProfilePhoto(context, currentProfilePhoto)
+            val listForSave = selectedPhotos.filter { it.name == null }
+            if (currentProfilePhoto?.name != null && listForSave.isEmpty()){
+                onNext()
+                leroViewModel.clear()
+                return@RegisterScaffold
             }
-            registrationViewModel.savePhotos(context, selectedPhotos.filter { it.name == null })
+
+            if (currentProfilePhoto?.name == null) {
+                leroViewModel.saveProfilePhoto(context, currentProfilePhoto)
+            }
+            leroViewModel.savePhotos(context, listForSave)
         },
         onSkip = onNext,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        errorMessage = leroViewModel.erroUpdateOrEdit,
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
-
-
         Text(
             text = stringResource(R.string.profile),
             style = MaterialTheme.typography.titleMedium,
@@ -193,8 +194,8 @@ fun RegisterPhotoScreen(
         )
         if (currentProfilePhoto != null) {
             currentProfilePhoto?.let { photo ->
-                ImageItem(
-                    uri = photo.url?.let { Uri.parse(it) },
+                PhotoItem(
+                    url = photo.url,
                     modifier = Modifier.size(70.dp),
                     onRemove = {
                         currentProfilePhoto = null
@@ -229,8 +230,8 @@ fun RegisterPhotoScreen(
                 }
                 items(selectedPhotos.size) { index ->
                     val item = selectedPhotos[index]
-                    ImageItem(
-                        uri = Uri.parse(item.url),
+                    PhotoItem(
+                        url = item.url,
                         modifier = Modifier
                             .size(70.dp)
                             .padding(end = 4.dp),
@@ -335,47 +336,7 @@ fun RegisterPhotoScreen(
     }
 }
 
-@Composable
-fun ImageItem(uri: Uri?, modifier: Modifier, onRemove: () -> Unit) {
-    val request = ImageRequest.Builder(LocalContext.current)
-        .data(uri)
-        .build()
 
-    Box(
-        modifier = modifier
-            .background(
-                MaterialTheme.colorScheme.onBackground.copy(.05f),
-                RoundedCornerShape(10.dp)
-            )
-    ) {
-        AsyncImage(
-            model = request,
-            contentDescription = null,
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(10.dp))
-        )
-
-        IconButton(
-            onClick = { onRemove() },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(32.dp)
-                .padding(4.dp),
-            colors = IconButtonDefaults.iconButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-                containerColor = MaterialTheme.colorScheme.onBackground.copy(.5f),
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Clear,
-                contentDescription = "Remove photo",
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
 
 @Composable
 fun AddPhotoButton(onClick: () -> Unit, modifier: Modifier = Modifier) {

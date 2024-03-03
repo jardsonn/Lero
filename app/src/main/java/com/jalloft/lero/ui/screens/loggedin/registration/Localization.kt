@@ -28,31 +28,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jalloft.lero.R
 import com.jalloft.lero.ui.components.RegisterScaffold
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.MANDATORY_DATA_SAVED
 import com.jalloft.lero.util.PermissionUtil
 import com.jalloft.lero.util.UserFields
 import com.orhanobut.hawk.Hawk
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 
 @Composable
 fun LocalizationScreen(
     onBack: (() -> Unit)?,
     onDone: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
     var address by remember { mutableStateOf<Address?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
             onDone()
             Hawk.put(MANDATORY_DATA_SAVED, true)
-            registrationViewModel.clear()
+            leroViewModel.clear()
         }
     })
 
@@ -81,12 +80,12 @@ fun LocalizationScreen(
     val locationPermissionRequest = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
-            registrationViewModel.isLoadingUpdateOrEdit = false
+            leroViewModel.isLoadingUpdateOrEdit = false
             if (isGranted) {
                 scope.launch {
                     val localization = PermissionUtil.getLocation(context)
                     val updates = mapOf(UserFields.LOCATION to localization)
-                    registrationViewModel.updateOrEdit(context, updates)
+                    leroViewModel.updateOrEdit(context, updates)
                 }
             } else {
                 Toast.makeText(
@@ -103,17 +102,21 @@ fun LocalizationScreen(
         onBack = onBack,
         textButton = if (address == null) "Conceder" else "Atualizar",
         textSecundaryButton = if (address == null) "" else "Continuar em ${address?.subAdminArea}",
-        onSecundarySubmit = if (address != null) onDone else null,
+        onSecundarySubmit = if (address != null) ({
+            onDone()
+            Hawk.put(MANDATORY_DATA_SAVED, true)
+            leroViewModel.clear()
+        }) else null,
         onSubmit = {
 //            Hawk.put(MANDATORY_DATA_SAVED, true)
             PermissionUtil.requestPerimission(
                 context,
                 onPermissionGranted = {
                     scope.launch {
-                        registrationViewModel.isLoadingUpdateOrEdit = true
+                        leroViewModel.isLoadingUpdateOrEdit = true
                         val localization = PermissionUtil.getLocation(context)
                         val updates = mapOf(UserFields.LOCATION to localization)
-                        registrationViewModel.updateOrEdit(context, updates)
+                        leroViewModel.updateOrEdit(context, updates)
                     }
                 },
                 onRequestPermission = {
@@ -125,8 +128,8 @@ fun LocalizationScreen(
                 })
 
         },
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        errorMessage = leroViewModel.erroUpdateOrEdit,
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
 
         Image(

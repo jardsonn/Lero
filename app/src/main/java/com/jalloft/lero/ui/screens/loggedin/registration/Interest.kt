@@ -26,7 +26,7 @@ import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -37,10 +37,10 @@ import timber.log.Timber
 fun InterestScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -54,9 +54,9 @@ fun InterestScreen(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
-            registrationViewModel.clear()
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
+            leroViewModel.clear()
             onNext()
         }
     })
@@ -65,22 +65,22 @@ fun InterestScreen(
         title = stringResource(R.string.what_are_you_looking_for),
         subtitle = stringResource(R.string.interests_subtitle),
         onBack = onBack,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
             if (interests != user?.interests) {
                 val updates = mapOf(
                     UserFields.INTERESTS to interests,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             } else {
                 Timber.i("Dados não alterados e não atualizados")
-                registrationViewModel.clear()
+                leroViewModel.clear()
                 onNext()
             }
         },
         onSkip = onNext,
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
 
         val text =

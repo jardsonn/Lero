@@ -12,6 +12,7 @@ import javax.inject.Inject
 import com.google.firebase.Timestamp
 import com.jalloft.lero.util.PHOTO_COLLECTION
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 import java.util.Date
 import javax.inject.Named
 
@@ -52,7 +53,7 @@ class FirebaseCloudStorageImpl @Inject constructor(
                 val collectionPhotoRef = photoRef.child("$PHOTO_COLLECTION/$userId/$fileName")
                 collectionPhotoRef.putFile(Uri.parse(photo.url)).await()
             }
-            val photos = uploadTasks.map { taskSnapshot ->
+            val savedPhotos = uploadTasks.map { taskSnapshot ->
                 val downloadUrl = taskSnapshot.storage.downloadUrl.await()
                 val creationTimeMillis =
                     taskSnapshot.metadata?.creationTimeMillis ?: System.currentTimeMillis()
@@ -63,7 +64,7 @@ class FirebaseCloudStorageImpl @Inject constructor(
                     userCreatedIn = Timestamp(Date(creationTimeMillis))
                 )
             }
-            emit(ResponseState.Success(photos))
+            emit(ResponseState.Success(savedPhotos))
         } catch (e: Exception) {
             emit(ResponseState.Failure(e))
         }

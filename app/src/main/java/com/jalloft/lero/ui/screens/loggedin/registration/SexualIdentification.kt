@@ -1,31 +1,8 @@
 package com.jalloft.lero.ui.screens.loggedin.registration
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,10 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import com.jalloft.lero.R
 import com.jalloft.lero.data.domain.enums.SexualGender
 import com.jalloft.lero.data.domain.enums.SexualOrientation
@@ -48,9 +22,7 @@ import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.ui.theme.LeroTheme
-import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
 import timber.log.Timber
 
@@ -60,11 +32,11 @@ import timber.log.Timber
 fun SexualIdentification(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
     val context = LocalContext.current
 
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     var gender by remember { mutableStateOf(user?.gender) }
     var orientation by remember { mutableStateOf(user?.orientation) }
@@ -80,9 +52,9 @@ fun SexualIdentification(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
-            registrationViewModel.clear()
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
+            leroViewModel.clear()
             onNext()
         }
     })
@@ -105,16 +77,16 @@ fun SexualIdentification(
                     UserFields.GENDER to gender,
                     UserFields.ORIENTATION to orientation,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             } else {
                 Timber.i("Dados não alterados e não atualizados")
-                registrationViewModel.clear()
+                leroViewModel.clear()
                 onNext()
             }
         },
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        errorMessage = leroViewModel.erroUpdateOrEdit,
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
 
         SelectableTextField(

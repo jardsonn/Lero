@@ -1,4 +1,4 @@
-package com.jalloft.lero.ui.screens.loggedin.registration.viewmodel
+package com.jalloft.lero.ui.screens.viewmodel
 
 import android.content.Context
 import androidx.compose.runtime.getValue
@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.StorageException
 import com.jalloft.lero.R
@@ -26,62 +27,72 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class RegistrationViewModel @Inject constructor(
+class LeroViewModel @Inject constructor(
     private val firestoreRepo: FirebaseFirestoreRepository,
     private val authRepo: FirebaseAuthRepository,
     private val storageRepo: FirebaseCloudStorage,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val firebaseUser by lazy { authRepo.firebaseUser() }
+    private val firebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     var isLoadingUpdateOrEdit by mutableStateOf(false)
     var erroUpdateOrEdit by mutableStateOf<String?>(null)
     var isSuccessUpdateOrEdit by mutableStateOf(false)
-    var userState by mutableStateOf<User?>(null)
+
+    var currentUser by mutableStateOf<User?>(null)
+    var isLoadingCurrentUser by mutableStateOf(false)
+    var isErrorLoadUser by mutableStateOf(false)
 
     var isLoadedProfilePhoto by mutableStateOf(false)
     var isLoadedCollectionPhoto by mutableStateOf(false)
     var successCollectionPhoto by mutableStateOf<List<Photo>?>(null)
     var successProfilePhoto by mutableStateOf<Photo?>(null)
 
+    private val authStateListener: FirebaseAuth.AuthStateListener =
+        FirebaseAuth.AuthStateListener { auth ->
+            updateUserState(auth.currentUser?.uid)
+        }
+
     init {
-        updateUserState()
+        firebaseAuth.addAuthStateListener(authStateListener)
     }
 
     fun saveProfilePhoto(context: Context, photo: Photo?) {
         viewModelScope.launch(Dispatchers.IO) {
-            storageRepo.saveProfilePhoto(photo, firebaseUser?.uid).collectLatest { state ->
-                when (state) {
-                    ResponseState.Loading -> {
-                        isLoadedProfilePhoto = false
-                        isLoadingUpdateOrEdit = true
-                    }
+            storageRepo.saveProfilePhoto(photo, firebaseAuth.currentUser?.uid)
+                .collectLatest { state ->
+                    when (state) {
+                        ResponseState.Loading -> {
+                            isLoadedProfilePhoto = false
+                            isLoadingUpdateOrEdit = true
+                        }
 
-                    is ResponseState.Success -> {
-                        isLoadedProfilePhoto = true
-                        successProfilePhoto = state.data
-                        Timber.i("Foto do perfil ${state.data}")
-                    }
+                        is ResponseState.Success -> {
+                            isLoadedProfilePhoto = true
+                            successProfilePhoto = state.data
+                            Timber.i("Foto do perfil ${state.data}")
+                        }
 
-                    is ResponseState.Failure -> {
+                        is ResponseState.Failure -> {
 //                        isLoadingProfilePhoto = false
-                        val exceptionHandler = FirebaseStorageExceptionHandler(context)
-                        if (state.exception != null && state.exception is StorageException) {
-                            erroUpdateOrEdit = exceptionHandler.handleException(state.exception)
-                        } else {
-                            context.getString(R.string.error_firebase_generic_execption_null)
+                            val exceptionHandler = FirebaseStorageExceptionHandler(context)
+                            if (state.exception != null && state.exception is StorageException) {
+                                erroUpdateOrEdit = exceptionHandler.handleException(state.exception)
+                            } else {
+                                context.getString(R.string.error_firebase_generic_execption_null)
+                            }
                         }
                     }
                 }
-            }
 
         }
     }
 
     fun savePhotos(context: Context, photos: List<Photo>) {
+        Timber.i("Fotos para salvar $photos")
         viewModelScope.launch(Dispatchers.IO) {
-            storageRepo.savePhotos(photos, firebaseUser?.uid).collectLatest { state ->
+            storageRepo.savePhotos(photos, firebaseAuth.currentUser?.uid).collectLatest { state ->
                 when (state) {
                     ResponseState.Loading -> {
                         isLoadedCollectionPhoto = false
@@ -90,11 +101,14 @@ class RegistrationViewModel @Inject constructor(
 
                     is ResponseState.Success -> {
                         isLoadedCollectionPhoto = true
-                        successCollectionPhoto = state.data
+                        isLoadingUpdateOrEdit = false
+                        if (state.data.isNotEmpty()) {
+                            successCollectionPhoto = state.data
+                        }
                     }
 
                     is ResponseState.Failure -> {
-//                        isLoadingCollectionPhoto = false
+                        isLoadingUpdateOrEdit = false
                         val exceptionHandler = FirebaseStorageExceptionHandler(context)
                         if (state.exception != null && state.exception is StorageException) {
                             erroUpdateOrEdit = exceptionHandler.handleException(state.exception)
@@ -107,24 +121,33 @@ class RegistrationViewModel @Inject constructor(
         }
     }
 
-    private fun updateUserState() {
-        firebaseUser?.uid?.let {
-            firestoreRepo.addUserSnapshotListener(it) { state ->
+    private fun updateUserState(userUid: String?) {
+        if (userUid != null) {
+            firestoreRepo.addUserSnapshotListener(userUid) { state ->
                 when (state) {
                     ResponseState.Loading -> {
+                        isLoadingCurrentUser = true
+                        isErrorLoadUser = false
                         Timber.i("updateUserState::Carregando dados do usuário")
                     }
 
                     is ResponseState.Success -> {
-                        userState = state.data
+                        isLoadingCurrentUser = false
+                        isErrorLoadUser = false
+                        currentUser = state.data
                         Timber.i("updateUserState::Dados do usuário carreagdo = ${state.data}")
                     }
 
                     is ResponseState.Failure -> {
+                        isLoadingCurrentUser = false
+                        isErrorLoadUser = true
                         Timber.i("updateUserState::Ocorreu um erro ao obter o usuário: ${state.exception?.message}")
                     }
                 }
             }
+        } else {
+            isLoadingCurrentUser = false
+            isErrorLoadUser = true
         }
     }
 
@@ -137,7 +160,7 @@ class RegistrationViewModel @Inject constructor(
     fun updateOrEdit(context: Context, updates: Map<String, Any?>) {
         val exceptionHandler = FirebaseFirestoreExceptionHandler(context)
         viewModelScope.launch(Dispatchers.IO) {
-            firestoreRepo.updateOrEdit(firebaseUser?.uid, updates).collectLatest { response ->
+            firestoreRepo.updateOrEdit(firebaseAuth?.uid, updates).collectLatest { response ->
                 when (response) {
                     ResponseState.Loading -> {
                         isLoadingUpdateOrEdit = true
@@ -163,6 +186,11 @@ class RegistrationViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        firebaseAuth.removeAuthStateListener(authStateListener)
     }
 
 }

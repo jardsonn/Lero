@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -22,14 +21,12 @@ import com.jalloft.lero.R
 import com.jalloft.lero.data.domain.enums.Children
 import com.jalloft.lero.data.domain.enums.Drinker
 import com.jalloft.lero.data.domain.enums.Religion
-import com.jalloft.lero.data.domain.enums.SexualOrientation
 import com.jalloft.lero.data.domain.enums.Smoker
 import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.DataValidator
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -40,11 +37,11 @@ import timber.log.Timber
 fun LifestyleScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -71,10 +68,10 @@ fun LifestyleScreen(
         }
     })
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
             onNext()
-            registrationViewModel.clear()
+            leroViewModel.clear()
         }
     })
 
@@ -90,7 +87,7 @@ fun LifestyleScreen(
 //        enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
         onSkip = onNext,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
             if (smoker != user?.smoker || drinker != user?.drinker || children != user?.children || religion != user?.religion) {
                 val updates = mapOf(
@@ -99,14 +96,14 @@ fun LifestyleScreen(
                     UserFields.CHILDREN to children,
                     UserFields.RELIGION to religion,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             }else{
                 Timber.i("Dados não alterados e não atualizados")
                 onNext()
             }
         },
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
 
         SelectableTextField(

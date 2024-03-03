@@ -9,7 +9,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,13 +31,13 @@ import com.jalloft.lero.ui.components.NormalTextField
 import com.jalloft.lero.ui.components.OptionsListScaffold
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.components.SelectableTextField
-import com.jalloft.lero.ui.screens.loggedin.registration.viewmodel.RegistrationViewModel
-import com.jalloft.lero.util.DataValidator
-import com.jalloft.lero.util.DataValidator.INVALID_DATE_FORMT
-import com.jalloft.lero.util.DataValidator.INVALID_DATE_MINOR
-import com.jalloft.lero.util.DataValidator.VALID_DATE
-import com.jalloft.lero.util.DataValidator.isBirthDateValid
-import com.jalloft.lero.util.DataValidator.stringToTimestamp
+import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
+import com.jalloft.lero.util.DateUtil
+import com.jalloft.lero.util.DateUtil.INVALID_DATE_FORMT
+import com.jalloft.lero.util.DateUtil.INVALID_DATE_MINOR
+import com.jalloft.lero.util.DateUtil.VALID_DATE
+import com.jalloft.lero.util.DateUtil.isBirthDateValid
+import com.jalloft.lero.util.DateUtil.stringToTimestamp
 import com.jalloft.lero.util.TextFieldFilter.date
 import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.launch
@@ -50,11 +49,11 @@ import timber.log.Timber
 fun EssentialInformationScreen(
     onBack: (() -> Unit)?,
     onNext: () -> Unit,
-    registrationViewModel: RegistrationViewModel,
+    leroViewModel: LeroViewModel,
 ) {
 
     val context = LocalContext.current
-    val user = registrationViewModel.userState
+    val user = leroViewModel.currentUser
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -69,7 +68,7 @@ fun EssentialInformationScreen(
                 name = user.name.orEmpty()
             }
             if (dateOfBirth.trim().isEmpty()) {
-                dateOfBirth = DataValidator.dateToString(user.dateOfBirth?.toDate()).orEmpty()
+                dateOfBirth = DateUtil.dateToString(user.dateOfBirth?.toDate()).orEmpty()
             }
             if (height == null) {
                 height = user.height
@@ -84,9 +83,9 @@ fun EssentialInformationScreen(
         (name.isNotEmpty() && name.length > 3 && name.length < 30) && isBirthDateValid(dateOfBirth) == VALID_DATE && height != null
 
 
-    LaunchedEffect(key1 = registrationViewModel.isSuccessUpdateOrEdit, block = {
-        if (registrationViewModel.isSuccessUpdateOrEdit) {
-            registrationViewModel.clear()
+    LaunchedEffect(key1 = leroViewModel.isSuccessUpdateOrEdit, block = {
+        if (leroViewModel.isSuccessUpdateOrEdit) {
+            leroViewModel.clear()
             onNext()
         }
     })
@@ -97,23 +96,23 @@ fun EssentialInformationScreen(
         subtitle = stringResource(R.string.informe_seu_nome_e_sua_data_de_nascimento),
         enabledSubmitButton = isvalidSubmit,
         onBack = onBack,
-        errorMessage = registrationViewModel.erroUpdateOrEdit,
+        errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
-            if (name != user?.name || DataValidator.stringToDate(dateOfBirth) != user.dateOfBirth?.toDate() || height != user.height){
+            if (name != user?.name || DateUtil.stringToDate(dateOfBirth) != user.dateOfBirth?.toDate() || height != user.height){
                 val updates = mapOf(
                     UserFields.NAME to name,
                     UserFields.DATE_OF_BIRTH to stringToTimestamp(dateOfBirth),
                     UserFields.HEIGHT to height,
                 )
-                registrationViewModel.updateOrEdit(context, updates)
+                leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")
             }else{
                 Timber.i("Dados não alterados e não atualizados")
-                registrationViewModel.clear()
+                leroViewModel.clear()
                 onNext()
             }
         },
-        isLoading = registrationViewModel.isLoadingUpdateOrEdit
+        isLoading = leroViewModel.isLoadingUpdateOrEdit
     ) {
 
         NormalTextField(

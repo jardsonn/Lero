@@ -1,6 +1,5 @@
-package com.jalloft.lero.ui.screens.loggedin.main
+package com.jalloft.lero.ui.screens.loggedin.main.profile
 
-import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,10 +12,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -55,6 +52,7 @@ import com.valentinilk.shimmer.shimmer
 @Composable
 fun ProfileScreen(
     onBackSignIn: () -> Unit,
+    onPreferences: () -> Unit,
     leroViewModel: LeroViewModel,
 ) {
     Column(
@@ -65,7 +63,8 @@ fun ProfileScreen(
             LoadingContent()
         } else if (leroViewModel.currentUser != null) {
             leroViewModel.currentUser?.let { currentUser ->
-                ProfileContent(user = currentUser)
+                ProfileContent(user = currentUser, onPreferences,
+                    onEditProfile = { leroViewModel.signOut() })
             }
         } else {
             onBackSignIn()
@@ -140,7 +139,7 @@ fun ShimmerBox(modifier: Modifier) {
 }
 
 @Composable
-fun ProfileContent(user: User) {
+fun ProfileContent(user: User, onPreferences: () -> Unit, onEditProfile: () -> Unit) {
     Column {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -203,18 +202,14 @@ fun ProfileContent(user: User) {
                         modifier = Modifier.weight(1f),
                         icon = painterResource(id = R.drawable.ic_preferences),
                         text = stringResource(R.string.preferences),
-                        onClick = {
-
-                        }
+                        onClick = onPreferences
                     )
 
                     ProfileOption(
                         modifier = Modifier.weight(1f),
                         icon = painterResource(id = R.drawable.ic_edit_profile),
                         text = stringResource(R.string.edit_profile),
-                        onClick = {
-
-                        }
+                        onClick = onEditProfile
                     )
 
                     ProfileOption(
@@ -268,7 +263,8 @@ fun ProfileContent(user: User) {
                         modifier = Modifier
                             .height(120.dp)
                             .weight(1f),
-                        shape = RoundedCornerShape(5.dp),)
+                        shape = RoundedCornerShape(5.dp),
+                    )
                 }
             }
         }

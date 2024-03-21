@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jalloft.lero.R
+import com.jalloft.lero.data.domain.Choice
+import com.jalloft.lero.data.domain.DatingPreferences
 import com.jalloft.lero.ui.components.RegisterScaffold
 import com.jalloft.lero.ui.screens.viewmodel.LeroViewModel
 import com.jalloft.lero.util.MANDATORY_DATA_SAVED
@@ -57,8 +59,8 @@ fun LocalizationScreen(
 
 
     LaunchedEffect(key1 = user) {
-        if (user?.location != null) {
-            with(user.location) {
+        if (user?.datingPreferences?.location?.preference != null) {
+            with(user.datingPreferences.location.preference) {
                 val geocoder = Geocoder(context)
                 if (longitude != null && latitude != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -84,7 +86,8 @@ fun LocalizationScreen(
             if (isGranted) {
                 scope.launch {
                     val localization = PermissionUtil.getLocation(context)
-                    val updates = mapOf(UserFields.LOCATION to localization)
+                    val datingPreferences = DatingPreferences(location = Choice(localization, user?.datingPreferences?.location?.isStrong))
+                    val updates = mapOf(UserFields.DATING_PREFERENCES to datingPreferences)
                     leroViewModel.updateOrEdit(context, updates)
                 }
             } else {
@@ -115,7 +118,8 @@ fun LocalizationScreen(
                     scope.launch {
                         leroViewModel.isLoadingUpdateOrEdit = true
                         val localization = PermissionUtil.getLocation(context)
-                        val updates = mapOf(UserFields.LOCATION to localization)
+                        val datingPreferences = DatingPreferences(location = Choice(localization, user?.datingPreferences?.location?.isStrong))
+                        val updates = mapOf(UserFields.DATING_PREFERENCES to datingPreferences)
                         leroViewModel.updateOrEdit(context, updates)
                     }
                 },

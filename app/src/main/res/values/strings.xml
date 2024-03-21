@@ -222,6 +222,14 @@
     <string name="edit_profile">Editar perfil</string>
     <string name="preferences">Preferências</string>
     <string name="no_photos_yet">Ainda não há fotos</string>
+    <string name="preferences_description">Entender suas preferências nos auxilia na avaliação de compatibilidade com outras pessoas. Ocasionalmente, também podemos sugerir perfis que, apesar de não se encaixarem exatamente em suas preferências, podem resultar em uma ótima conexão.</string>
+    <string name="basics_informations">Informações básicas</string>
+    <string name="undefined">Não definido</string>
+    <string name="all">Todos</string>
+    <string name="dating_location">Localização de encontros</string>
+    <string name="distance_from_you">Distância de você</string>
+    <string name="age_range">Faixa etária</string>
+    <string name="looking_for">À procura de</string>
 
 
 </resources>

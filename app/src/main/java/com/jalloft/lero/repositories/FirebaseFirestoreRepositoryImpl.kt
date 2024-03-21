@@ -2,11 +2,14 @@ package com.jalloft.lero.repositories
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.core.UserData
 import com.google.firebase.firestore.toObject
+import com.jalloft.lero.data.domain.Choice
 import com.jalloft.lero.data.domain.City
+import com.jalloft.lero.data.domain.DatingPreferences
 import com.jalloft.lero.data.domain.Education
 import com.jalloft.lero.data.domain.Height
 import com.jalloft.lero.data.domain.enums.Interests
@@ -14,8 +17,11 @@ import com.jalloft.lero.data.domain.enums.SexualGender
 import com.jalloft.lero.data.domain.enums.SexualOrientation
 import com.jalloft.lero.data.domain.User
 import com.jalloft.lero.data.domain.Work
+import com.jalloft.lero.util.PREFERENCES_DISTANCE
+import com.jalloft.lero.util.PREFERENCES_PATH
 import com.jalloft.lero.util.ResponseState
 import com.jalloft.lero.util.USERS
+import com.jalloft.lero.util.UserFields
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -27,6 +33,7 @@ import javax.inject.Named
 
 
 class FirebaseFirestoreRepositoryImpl @Inject constructor(
+    private val db: FirebaseFirestore,
     @Named(USERS) private val usersRef: CollectionReference,
 ) : FirebaseFirestoreRepository {
 
@@ -123,7 +130,8 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
     ) = flow {
         try {
             emit(ResponseState.Loading)
-            usersRef.document(userId).update("interests", interests).await()
+            val datingPreferences = DatingPreferences(lookingFor = Choice(interests, false))
+            usersRef.document(userId).update(UserFields.DATING_PREFERENCES, datingPreferences).await()
             emit(ResponseState.Success(Unit))
         } catch (e: Exception) {
             Timber.w("updateUserDataInterests::failure", e.message)
@@ -243,6 +251,20 @@ class FirebaseFirestoreRepositoryImpl @Inject constructor(
                 Timber.d("Current data: null")
             }
         }
+    }
+
+    override fun getDistances(): Flow<List<Int>> = flow {
+        try {
+            val preferencesRef = db.collection(PREFERENCES_PATH).document(PREFERENCES_DISTANCE)
+            val snapshot = preferencesRef.get().await()
+            val currentDistances = (snapshot?.data?.get("km") as? List<*>)?.map { (it as Long).toInt() }
+            if (currentDistances != null) {
+                emit(currentDistances)
+            }
+        }catch (e: Exception){
+            e.printStackTrace()
+        }
+
     }
 
 //    override suspend fun getUserData(userId: String) = flow {

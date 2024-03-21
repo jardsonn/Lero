@@ -66,11 +66,13 @@ interface FirebaseFirestoreRepository {
     ): Flow<ResponseState<Unit>>
 
 
-//    suspend fun getUserData(userId: String,): Flow<ResponseState<User?>>
-     fun getUserData(userId: String,): Flow<User?>
+    //    suspend fun getUserData(userId: String,): Flow<ResponseState<User?>>
+    fun getUserData(userId: String): Flow<User?>
 
     suspend fun updateOrEdit(userId: String?, updates: Map<String, Any?>): Flow<ResponseState<Unit>>
 
     fun addUserSnapshotListener(userId: String, responseState: (ResponseState<User?>) -> Unit)
+
+    fun getDistances(): Flow<List<Int>>
 
 }

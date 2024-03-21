@@ -73,7 +73,7 @@ fun PhotoItem(
                             painter = painterResource(id = R.drawable.ic_image),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(48.dp)
+                                .size(32.dp)
                                 .padding(16.dp),
                         )
                     }
@@ -101,7 +101,7 @@ fun PhotoItem(
                             painter = painterResource(id = R.drawable.ic_image),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(50.dp)
+                                .size(32.dp)
                                 .padding(16.dp),
                         )
                     }

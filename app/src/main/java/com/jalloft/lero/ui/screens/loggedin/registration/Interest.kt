@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jalloft.lero.R
+import com.jalloft.lero.data.domain.Choice
+import com.jalloft.lero.data.domain.DatingPreferences
 import com.jalloft.lero.data.domain.enums.Interests
 import com.jalloft.lero.ui.components.ItemOption
 import com.jalloft.lero.ui.components.OptionsListScaffold
@@ -50,7 +52,7 @@ fun InterestScreen(
 
     LaunchedEffect(key1 = user, block = {
         if (interests.isEmpty() && user != null) {
-            interests.addAll(user.interests)
+            user.datingPreferences?.lookingFor?.preference?.let { interests.addAll(it) }
         }
     })
 
@@ -67,9 +69,15 @@ fun InterestScreen(
         onBack = onBack,
         errorMessage = leroViewModel.erroUpdateOrEdit,
         onSubmit = {
-            if (interests != user?.interests) {
+            if (interests != user?.datingPreferences?.lookingFor?.preference) {
+                val datingPreferences = DatingPreferences(
+                    lookingFor = Choice(
+                        interests,
+                        user?.datingPreferences?.lookingFor?.isStrong
+                    )
+                )
                 val updates = mapOf(
-                    UserFields.INTERESTS to interests,
+                    UserFields.DATING_PREFERENCES to datingPreferences,
                 )
                 leroViewModel.updateOrEdit(context, updates)
                 Timber.i("Dados atualizados")

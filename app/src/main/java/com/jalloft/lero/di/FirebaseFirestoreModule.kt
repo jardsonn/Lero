@@ -26,11 +26,14 @@ object FirebaseFirestoreModule {
 
     @Provides
     fun provideFirebaseFirestoreRepository(
+        db: FirebaseFirestore,
         @Named(USERS) usersRef: CollectionReference,
-    ): FirebaseFirestoreRepository = FirebaseFirestoreRepositoryImpl(usersRef)
+    ): FirebaseFirestoreRepository = FirebaseFirestoreRepositoryImpl(db, usersRef)
 
 
     @Provides
     @Named(USERS)
     fun provideUsersRef(db: FirebaseFirestore) = db.collection(USERS)
+
+
 }

@@ -54,9 +54,16 @@ class LeroViewModel @Inject constructor(
             updateUserState(auth.currentUser?.uid)
         }
 
+    val distances by lazy { firestoreRepo.getDistances() }
+
     init {
         firebaseAuth.addAuthStateListener(authStateListener)
     }
+
+    fun signOut() {
+        firebaseAuth.signOut()
+    }
+
 
     fun saveProfilePhoto(context: Context, photo: Photo?) {
         viewModelScope.launch(Dispatchers.IO) {

@@ -81,11 +81,13 @@ object DateUtil {
         }
     }
 
-    fun calculateAge(dateOfBirth: Date?): Int {
+    fun calculateAge(dateOfBirth: Date?): Int? {
         val currentDate = Calendar.getInstance()
         val dob = Calendar.getInstance()
         if (dateOfBirth != null) {
             dob.time = dateOfBirth
+        }else{
+            return null
         }
 
         var age = currentDate.get(Calendar.YEAR) - dob.get(Calendar.YEAR)

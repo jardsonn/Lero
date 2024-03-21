@@ -20,7 +20,7 @@ fun getRoute(user: User?): String{
             return RegisterDataDestination.SexualIdentification.route 
         } else if (user.city == null) {
             return RegisterDataDestination.Birthplace.route 
-        } else if (user.interests.isEmpty()) {
+        } else if (user.datingPreferences?.lookingFor?.preference.isNullOrEmpty()) {
             return RegisterDataDestination.Interest.route 
         } else if (user.work?.profission == null || user.work.company == null || user.education?.level == null || user.education.higherEducationInstitution == null || user.education.secondaryEducationInstitution == null || user.education.postGraduationInstitution == null) {
             return RegisterDataDestination.WorkAndEducation.route 

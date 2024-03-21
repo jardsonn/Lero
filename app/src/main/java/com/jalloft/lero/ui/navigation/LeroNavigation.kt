@@ -3,8 +3,6 @@ package com.jalloft.lero.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -22,7 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseAuth
-import com.jalloft.lero.ui.screens.loggedin.main.ProfileScreen
+import com.jalloft.lero.ui.screens.loggedin.main.profile.PreferencesScreen
+import com.jalloft.lero.ui.screens.loggedin.main.profile.ProfileScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.BiographyScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.LifestyleScreen
 import com.jalloft.lero.ui.screens.loggedin.registration.EssentialInformationScreen
@@ -46,7 +45,10 @@ import timber.log.Timber
 
 
 @Composable
-fun LeroNavigation(contentPadding: PaddingValues = PaddingValues(), navController: NavHostController) {
+fun LeroNavigation(
+    contentPadding: PaddingValues = PaddingValues(),
+    navController: NavHostController
+) {
     val startDestination = getStartDestination()
 //    val startDestination =  GraphDestination.DataRegistration.route
     val citySearchViewModel: CityViewModel = hiltViewModel()
@@ -67,7 +69,7 @@ fun LeroNavigation(contentPadding: PaddingValues = PaddingValues(), navControlle
         modifier = Modifier.padding(contentPadding)
     ) {
         loggedOutGraph(navController, loggedOutViewModel)
-        loggedInGraph(navController, leroViewModel)
+        mainNavigationGraph(navController, leroViewModel)
         registerDataGraph(
             navController,
             citySearchViewModel = citySearchViewModel,
@@ -265,9 +267,6 @@ fun NavGraphBuilder.loggedOutGraph(navController: NavController, viewModel: Logg
                                 popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
                             }
                         }
-//                        navController.navigate(GraphDestination.DataRegistration.route.plus("?userId=${user?.uid}")) {
-//                            popUpTo(GraphDestination.LoggedOut.route) { inclusive = true }
-//                        }
                     },
                     onBack = {
                         navController.popBackStack()
@@ -279,7 +278,7 @@ fun NavGraphBuilder.loggedOutGraph(navController: NavController, viewModel: Logg
 }
 
 
-fun NavGraphBuilder.loggedInGraph(navController: NavController, viewModel: LeroViewModel) {
+fun NavGraphBuilder.mainNavigationGraph(navController: NavController, viewModel: LeroViewModel) {
     navigation(
         startDestination = BottomNavigationDestination.Home.route,
         route = GraphDestination.LoggedIn.route,
@@ -290,8 +289,23 @@ fun NavGraphBuilder.loggedInGraph(navController: NavController, viewModel: LeroV
         composable(BottomNavigationDestination.Message.route) {}
         composable(BottomNavigationDestination.Profile.route) {
             ProfileScreen(
-                onBackSignIn = {},
+                onBackSignIn = {
+                    navController.navigate(GraphDestination.LoggedOut.route) {
+                        popUpTo(GraphDestination.LoggedIn.route) { inclusive = true }
+                    }
+                },
+                onPreferences = {
+                    navController.navigate(AlternativeDestination.Preferences.route)
+                },
                 leroViewModel = viewModel
+            )
+        }
+        composable(AlternativeDestination.Preferences.route) {
+            PreferencesScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
             )
         }
     }
@@ -332,25 +346,25 @@ fun SlideNavHost(
         route = route,
         popEnterTransition = {
             slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.End,
+                AnimatedContentTransitionScope.SlideDirection.Right,
                 animationSpec = tween(350)
             )
         },
         popExitTransition = {
             slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.End,
+                AnimatedContentTransitionScope.SlideDirection.Right,
                 animationSpec = tween(300)
             )
         },
         enterTransition = {
             slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Start,
+                AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(400)
             )
         },
         exitTransition = {
             slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Start,
+                AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(400)
             )
         },
